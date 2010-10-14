@@ -27,6 +27,13 @@
 # TODO: o_v o_V o_CTRL_V
 # TODO: aw aW iW as is op ip at it
 
+# History
+
+# v0.0.1
+# Initial version.
+
+# Code
+
 bindkey -N opp
 
 typeset -A opps; opps=()
