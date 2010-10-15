@@ -31,6 +31,9 @@ TODO: aw aW iW as is op ip at it
 
 History
 
+v0.0.2
+Fix cc dd yy not work bug.
+
 v0.0.1
 Initial version.
 </pre>
