@@ -138,23 +138,34 @@ def-oppc-pair '
 '
 
 def-oppc-inbetween-1 () {
+  def-oppc-inbetween-2 "$1" "opp+i$s" "opp+a$s" oppc-inbetween-main
+}
+
+oppc-inbetween-main () {
+  local s="$1"; shift
+  zle -U "$s"
+  "$@"
+}
+
+def-oppc-inbetween-2 () {
   local s="$1"
-  local ifun="opp+i$s"
-  local afun="opp+a$s"
+  local ifun="$2"
+  local afun="$3"
+  local proc="$4"
   eval "$(cat <<EOT
     def-oppc i${(q)s}; ${(q)ifun} () {
-      zle -U ${(q)s}
-      opp-generic \
-        -0 vi-find-prev-char-skip \
-        -1 vi-rev-repeat-find \
-        "\$@"
+      $proc ${(q)s} \
+        opp-generic \
+          -0 vi-find-prev-char-skip \
+          -1 vi-rev-repeat-find \
+          "\$@"
     }
     def-oppc a${(q)s}; ${(q)afun} () {
-      zle -U ${(q)s}
-      opp-generic \
-        -1 vi-find-prev-char-skip \
-        -0 vi-rev-repeat-find \
-        "\$@"
+      $proc ${(q)s} \
+        opp-generic \
+          -1 vi-find-prev-char-skip \
+          -0 vi-rev-repeat-find \
+          "\$@"
     }
 EOT
   )"
