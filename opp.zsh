@@ -36,6 +36,9 @@
 
 # History
 
+# v0.0.4
+# Add textobj-between link.
+
 # v0.0.3
 # Cleanup inbetween codes.
 
