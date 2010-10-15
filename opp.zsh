@@ -327,7 +327,10 @@ opp-zcompile () {
   setopt extended_glob no_shwordsplit
 
   echo "** zcompiling opp in ${d} for a little faster startups..."
-  { source ${s} >/dev/null 2>&1 } # Paranoid.
+  [[ -n ${OPP_PARANOID-} ]] && {
+    echo "* reloading ${s}"
+    source ${s} >/dev/null 2>&1
+  }
   echo "mkdir -p ${d}" | sh -x
   opp-clean ${d}
   opp-install-installer
