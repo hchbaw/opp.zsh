@@ -234,7 +234,7 @@ opp-register-zle opp-vi-yank opp-copy-region vi-yank opp-id
 typeset -gA opp_operators; opp_operators=()
 opp () {
   # to implement autoloading easier,
-  # all of the operetor commands will be dispatched through this func.
+  # all of the operator commands will be dispatched through this func.
   opp1
 }
 opp1 () { $opp_operators[$KEYS]; }
