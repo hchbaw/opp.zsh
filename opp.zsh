@@ -22,6 +22,7 @@
 # Note:
 # This script replaces vicmd kepmap entries. Please beware of.
 
+# TODO: dd cc yy not work
 # TODO: in case these (ci" with improper double quotes) situations.
 # TODO: operator (currently c, d and y)
 # TODO: o_v o_V o_CTRL_V
