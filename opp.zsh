@@ -22,7 +22,6 @@
 # Note:
 # This script replaces vicmd kepmap entries. Please beware of.
 
-# TODO: dd cc yy not work
 # TODO: in case these (ci" with improper double quotes) situations.
 # TODO: operator (currently c, d and y)
 # TODO: o_v o_V o_CTRL_V
@@ -170,24 +169,37 @@ with-opp () {
   {
     zle -N undefined-key opp-undefined-key
     opp_keybuffer=$KEYS
-    "$@"
+    "$@" "$opp_keybuffer"
   } always {
     zle -N undefined-key opp-id # TODO: anything better?
   }
+}
+
+opp-linewise () {
+  zle beginning-of-line
+  zle set-mark-command
+  zle end-of-line
+  zle "$1"
 }
 
 opp-recursive-edit-1 () {
   local oppk="${1}"
   local fail="${2}"
   local succ="${3}"
+  local   op="${4}"
   zle recursive-edit -K opp && {
     ${opps[$KEYS]} opp-k $oppk
     zle $succ
   } || {
     local arg=$opp_keybuffer[2,-1]
     [[ -n $arg ]] && {
-      zle -U "$arg"
-      zle $fail
+      if [[ $arg == $op ]]; then
+        opp-linewise $oppk
+        zle $succ
+      else
+        zle -U "$arg"
+        zle $fail
+      fi
     }
   }
 }
