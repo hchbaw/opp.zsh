@@ -218,20 +218,20 @@ opp-register-zle opp-vi-delete kill-region vi-delete opp-id
 opp-register-zle opp-vi-yank opp-copy-region vi-yank opp-id
 
 # Entry point.
-typeset -gA opp_operotors; opp_operotors=()
+typeset -gA opp_operators; opp_operators=()
 opp () {
   # to implement autoloading easier,
   # all of the operetor commands will be dispatched through this func.
   opp1
 }
-opp1 () { $opp_operotors[$KEYS]; }
+opp1 () { $opp_operators[$KEYS]; }
 
 opp-install () {
   {
     zle -N opp opp
-    typeset -gA opp_operotors; opp_operotors=()
+    typeset -gA opp_operators; opp_operators=()
     BK () {
-      opp_operotors+=("$1" $2)
+      opp_operators+=("$1" $2)
       bindkey -M vicmd "$1" opp
       { bindkey -M afu-vicmd "$1" opp } > /dev/null 2>&1
     }
