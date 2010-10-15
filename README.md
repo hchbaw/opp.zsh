@@ -24,6 +24,13 @@ necessary functions.
 Note:
 This script replaces vicmd kepmap entries. Please beware of.
 
+Extension:
+
+textobj-between (http://gist.github.com/628951)
+http://d.hatena.ne.jp/thinca/20100614/1276448745
+http://d.hatena.ne.jp/tarao/20100715/1279185753
+Thank you very much, thinca and tarao!
+
 TODO: in case these (ci" with improper double quotes) situations.
 TODO: operator (currently c, d and y)
 TODO: o_v o_V o_CTRL_V
