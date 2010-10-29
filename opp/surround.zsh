@@ -10,10 +10,9 @@ def-oppc s opp+surround; opp+surround () {
   {
     opp_surround_opp=${opp_surround_opp:-$op}
     [[ $op == 'y' ]] && {
-      zle opp-recursive-edit opp-id opp-id opp-id; ((REGION_ACTIVE==1)) \
-      && { opp-s-read $opp_surround_opp opp-surround }
+      zle opp-recursive-edit opp-s-read+y opp-id opp-id; return $?
     } || [[ -n $opp_surround_opp ]] \
-      && { opp-s-read $opp_surround_opp opp-surround }
+      && { opp-s-read $opp_surround_opp opp-surround; return $?}
   } always {
     opp_surround_opp=
     zle set-mark-command -n -1
@@ -21,7 +20,17 @@ def-oppc s opp+surround; opp+surround () {
   }
 }
 
+opp-s-read+y () {
+  opp-s-read $opp_surround_opp opp-surround
+}; zle -N opp-s-read+y
+
 opp-s-read () {
+  local op="$1"
+  [[ $op == 'y' ]] && [[ $KEYS == 's' ]] && op='linewise'
+  opp-s-read-1 "$op" "$2"
+}
+
+opp-s-read-1 () {
   local   op="$1"; shift
   local succ="$1"; shift
   opp-s-read-acc () {
@@ -32,31 +41,18 @@ opp-s-read () {
     return -1
   }
   opp-s-reading () { zle -R "${1[1]}s" }
-  opp-s-read-1 "$op" opp-s-read-acc "$succ" opp-s-read-fail opp-s-reading "$@"
+  opp-s-read-2 "$op" opp-s-read-acc "$succ" opp-s-read-fail opp-s-reading "$@"
 }
 
-opp-s-read-1 () {
+opp-s-read-2 () {
   local   op="$1"; shift
   local pred="$1"; shift
   local succ="$1"; shift
   local fail="$1"; shift
   local mess="$1"; shift
 
-  echo "**"
-  echo $opp_keybuffer
-  echo "**#:"
-
-  # TODO: linewise for 'y'
-  # TODO: remove this 'y'
-  [[ $op == 'y' ]] && [[ $opp_keybuffer == 's' ]] && {
-    opp-s-read "linewise" opp-surround
-    return 0
-  }
-  [[ $op != 'c' ]] && [[ $op != 'd' ]] && {
-    "$mess" $op
-  }
   local c; read -s -k 1 c
-  # TODO: remove this 'd' and 'c'. 's', too if possible.
+  # TODO: remove d and c dependencies. s, too if possible.
   [[ $op == 'd' ]] && [[ $c == 's' ]] && return -1
   [[ $op == 'c' ]] && [[ $c == 's' ]] && {
     opp-s-read "linewise" opp-surround
@@ -85,25 +81,23 @@ opp-s-loop () {
   local succ="$7"
   local fail="$8"
   local mess="$9"
-  shift 9 # At this point "$@" indicates refering the &rest argment.
+  shift 9 # At this point "$@" indicates refering the &rest argument.
 
   ((r==-255)) && { return -1 }
 
   "$mess" "$o" "$a" "$@"
 
-  local -i n0; ((n0=${#${(@M)ks:#${a}}} ))
-  local -i n1; ((n1=${#${(@M)ks:#${a}*}}))
-
   opp-s-loop-1 () {
     local fn="$1"; shift
     "$fn" $o $e "$c" $p "$a" $f $succ $fail $mess "$@"
   }
-
+  local -i n0; ((n0=${#${(@M)ks:#${a}}} ))
+  local -i n1; ((n1=${#${(@M)ks:#${a}*}}))
   ((n0==1)) && ((r ==0)) &&              {"$succ" "$o" "$a" "$@"; return 0} ||
   ((n0==1)) && ((n1==1)) &&              {"$succ" "$o" "$a" "$@"; return 0} ||
   ((n1==0)) && ((r ==0)) && ((f ==1)) && {"$succ" "$o" "$a" "$@"; return 0} ||
-  ((n1==0)) && {   opp-s-loop-1    "$fail" "$@"; return -1                } ||
-  { read -s -k 1 c;opp-s-loop-1 opp-s-loop "$@"; return  0}
+  ((n1==0)) && {   opp-s-loop-1    "$fail" "$@"; return $?                } ||
+  { read -s -k 1 c;opp-s-loop-1 opp-s-loop "$@"; return $?}
 }
 
 opp-s-read-fail () {
