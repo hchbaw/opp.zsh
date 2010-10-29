@@ -11,8 +11,9 @@ def-oppc s opp+surround; opp+surround () {
     opp_surround_opp=${opp_surround_opp:-$op}
     [[ $op == 'y' ]] && {
       zle opp-recursive-edit opp-s-read+y opp-id opp-id; return $?
-    } || [[ -n $opp_surround_opp ]] \
-      && { opp-s-read $opp_surround_opp opp-surround; return $?}
+    } || [[ -n $opp_surround_opp ]] && {
+      opp-s-read $opp_surround_opp opp-surround; return $?
+    }
   } always {
     opp_surround_opp=
     zle set-mark-command -n -1
