@@ -26,9 +26,10 @@ opp-s-read+y () {
 }; zle -N opp-s-read+y
 
 opp-s-read () {
-  local op="$1"
+  local   op="$1"; shift
+  local succ="$1"; shift
   [[ $op == 'y' ]] && [[ $KEYS == 's' ]] && op='linewise'
-  opp-s-read-1 "$op" "$2"
+  opp-s-read-1 "$op" "$succ" "$@"
 }
 
 opp-s-read-1 () {
