@@ -81,6 +81,113 @@ def-oppc () {
   opps+=("$keys" "$funcname")
 }
 
+def-opp-skip () {
+  eval "$(cat <<EOT
+    $1 () { while [[ \$BUFFER[((CURSOR$3))] == $4 ]] do ((CURSOR$2)) done }
+EOT
+  )"
+}
+def-opp-skip opp-skip-blank-backward   -- -0 "[[:blank:]]"
+def-opp-skip opp-skip-blank-forward    ++ +1 "[[:blank:]]"
+def-opp-skip opp-skip-alnum-backward   -- -0 "[[:alnum:]]"
+def-opp-skip opp-skip-alnum-forward    ++ +1 "[[:alnum:]]"
+def-opp-skip opp-skip-punct-backward   -- -0 "[[:punct:]]"
+def-opp-skip opp-skip-punct-forward    ++ +1 "[[:punct:]]"
+def-opp-skip opp-skip-alpunum-backward -- -0 "[[:alnum:][:punct:]]"
+def-opp-skip opp-skip-alpunum-forward  ++ +1 "[[:alnum:][:punct:]]"
+
+opp-generic-w () {
+  zparseopts -D 1+:=fun1 2+:=fun2
+  local beg end fun
+  local -a fs; fs=(${=fun1})
+  fs=(${=fun1}); for fun in ${fs:#-1}; do "$fun"; done; ((beg=$CURSOR))
+  fs=(${=fun2}); for fun in ${fs:#-2}; do "$fun"; done; ((end=$CURSOR))
+  "$@" $beg $end
+}
+
+def-oppc iw; opp+iw () {
+  if [[ $BUFFER[((CURSOR+1))] == [[:blank:]] ]]; then
+    opp-generic-w \
+      -1 opp-skip-blank-backward \
+      -2 opp-skip-blank-forward \
+      -- \
+      "$@"
+  elif [[ $BUFFER[((CURSOR+1))] == [[:punct:]] ]]; then
+    opp-generic-w \
+      -1 opp-skip-punct-backward \
+      -2 opp-skip-punct-forward \
+      -- \
+      "$@"
+  else
+    opp-generic-w \
+      -1 opp-skip-alnum-backward \
+      -2 opp-skip-alnum-forward \
+      -- \
+      "$@"
+  fi
+}
+
+opp-skip-aw-forward-on-blank () {
+  zle opp-skip-blank-forward
+  if [[ $BUFFER[((CURSOR+1))] == [[:punct:]] ]]; then
+    opp-skip-punct-forward
+  else
+    opp-skip-alnum-forward
+  fi
+}
+
+def-oppc aw; opp+aw () {
+  if [[ $BUFFER[((CURSOR+1))] == [[:blank:]] ]]; then
+    opp-generic-w \
+      -1 opp-skip-blank-backward \
+      -2 opp-skip-aw-forward-on-blank \
+      "$@"
+  elif [[ $BUFFER[((CURSOR+1))] == [[:punct:]] ]]; then
+    opp-generic-w \
+      -1 opp-skip-punct-backward \
+      -1 opp-skip-blank-backward \
+      -2 opp-skip-blank-forward \
+      -2 opp-skip-punct-forward \
+      "$@"
+  else
+    opp-generic-w \
+      -1 opp-skip-alnum-backward \
+      -2 opp-skip-alnum-forward \
+      -2 opp-skip-blank-forward \
+      "$@"
+  fi
+}
+
+def-oppc iW; opp+iW () {
+  if [[ $BUFFER[((CURSOR+1))] == [[:blank:]] ]]; then
+    opp-generic-w \
+      -1 opp-skip-blank-backward \
+      -2 opp-skip-blank-forward \
+      "$@"
+  else
+    opp-generic-w \
+      -1 opp-skip-alpunum-backward \
+      -2 opp-skip-alpunum-forward \
+      "$@"
+  fi
+}
+
+def-oppc aW; opp+aW () {
+  if [[ $BUFFER[((CURSOR+1))] == [[:space:]] ]]; then
+    opp-generic-w \
+      -1 opp-skip-blank-backward \
+      -2 opp-skip-blank-forward \
+      -2 opp-skip-alpunum-forward \
+      "$@"
+  else
+    opp-generic-w \
+      -1 opp-skip-alpunum-backward \
+      -2 opp-skip-alpunum-forward \
+      -2 opp-skip-blank-forward \
+      "$@"
+  fi
+}
+
 opp-generic () {
   local fix1="$1"; shift
   local fun1="$1"; shift
@@ -90,25 +197,6 @@ opp-generic () {
   [[ $fun1 != none ]] && zle $fun1; ((beg=$CURSOR $fix1))
   [[ $fun2 != none ]] && zle $fun2; ((end=$CURSOR $fix2))
   "$@" $beg $end
-}
-
-opp-backward-word-end () {
-  zle vi-backward-word
-  zle vi-forward-word-end
-}; zle -N opp-backward-word-end
-
-def-oppc iw; opp+iw () {
-  if [[ $BUFFER[$CURSOR] == ' ' ]]; then
-    opp-generic \
-      +1 opp-backward-word-end \
-      -0 vi-forward-word \
-      "$@"
-  else
-    opp-generic \
-      -0 vi-backward-word \
-      +1 vi-forward-word-end \
-      "$@"
-  fi
 }
 
 def-oppc-pair-1 () {
