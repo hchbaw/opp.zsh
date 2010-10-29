@@ -1,14 +1,19 @@
+# surround.vim-ish for zsh.
 
-# TODO: these opp-ids!!!
-# TODO: these linewise detection!!! ysiw broken!!!
+# Author: Takeshi Banse <takebi@laafc.net>
+# Licence: Public Domain
 
-# TODO: see, below
-# (opp_sopps+=(y opp-surround+y) # TODO: link this key 'y' <=> def-oppc's 'y')
+# Thank you very much, Tim Pope!
+# I want to use the surround.vim in zsh.
+
+# Code
+
 opp_surround_opp=
 def-oppc s opp+surround; opp+surround () {
   local op="$opp_keybuffer"
   {
     opp_surround_opp=${opp_surround_opp:-$op}
+    # TODO: parameterize
     [[ $op == 'y' ]] && {
       zle opp-recursive-edit opp-s-read+y opp-id opp-id; return $?
     } || [[ -n $opp_surround_opp ]] && {
@@ -21,50 +26,92 @@ def-oppc s opp+surround; opp+surround () {
   }
 }
 
+opp-s-reading () {
+  local f0="$1"
+  local op="$2"
+  local  a="$3"
+  shift 3
+  local b=;
+  b+="${op[1]}s"; (($#@!=0)) && { b+="{$@[1]|$@[2]}" }; b+="$a"
+  zle -R "$b"
+}
+
 opp-s-read+y () {
+  opp-s-reading "$0" "y" ''
   opp-s-read $opp_surround_opp opp-surround
 }; zle -N opp-s-read+y
 
 opp-s-read () {
   local   op="$1"; shift
   local succ="$1"; shift
-  [[ $op == 'y' ]] && [[ $KEYS == 's' ]] && op='linewise'
-  opp-s-read-1 "$op" "$succ" "$@"
+
+  # TODO: parameterize
+  [[ $op == 'y' ]] && [[ $KEYS == 's' ]] && {
+    opp-s-read+linewise; return $?
+  } || {
+    opp-s-read-1 "$op" "$succ" opp-s-reading "$@"
+  }
+}
+
+opp-s-read+linewise () {
+  opp-s-read "linewise" opp-surround
 }
 
 opp-s-read-1 () {
   local   op="$1"; shift
   local succ="$1"; shift
+  local mess="$1"; shift
   opp-s-read-acc () {
-    local c="$1"
-    [[ $c == "" ]] && return -255 # XXX: see opp-s-loop
-    [[ $c != [[:print:]] ]] && return 0
-    : ${(P)2::=$3$1}
+    opp-s-read-acc-base "$@";{local -i ret=$?; ((ret==255)) || return $((ret))}
+    local      c="$1"
+    local aplace="$2"
+    local avalue="$3"
+    [[ $op == 'c' ]] && {
+      local e="$4"; local -a ks; {eval "ks=($e)"}
+      local -i n0; ((n0=${#${(@M)ks:#$avalue${c}*}}))
+      local -i n1; ((n1=${#${(@M)ks:#${c}*}}))
+      ((n0==0)) && ((n1!=0)) && {
+        # XXX: ambigous.
+        zle -U "$c"; return 0
+      }
+    }
+    : ${(P)aplace::=$avalue$c}
     return -1
   }
-  opp-s-reading () { zle -R "${1[1]}s" }
-  opp-s-read-2 "$op" opp-s-read-acc "$succ" opp-s-read-fail opp-s-reading "$@"
+  opp-s-read-2 "$op" opp-s-read-acc "$succ" opp-s-read-fail "$mess" "$@"
+}
+
+opp-s-read-acc-base () {
+  local      c="$1"
+  local aplace="$2"
+  local avalue="$3"
+  [[ $c == "" ]]          && return -255 # XXX: see opp-s-loop
+  [[ $c == "" ]]        && return 0
+  [[ $c == "" ]]        && {: ${(P)aplace::=$avalue[1,-2]}; return  1}
+  [[ $c != [[:print:]] ]] && return 0
+  [[ -z $avalue ]]        && {: ${(P)aplace::=$avalue$c}    ; return -1}
+  return 255
 }
 
 opp-s-read-2 () {
   local   op="$1"; shift
-  local pred="$1"; shift
+  local pacc="$1"; shift
   local succ="$1"; shift
   local fail="$1"; shift
   local mess="$1"; shift
 
+  "$mess" "$0" "$op" '' "$@"
+
   local c; read -s -k 1 c
-  # TODO: remove d and c dependencies. s, too if possible.
-  [[ $op == 'd' ]] && [[ $c == 's' ]] && return -1
-  [[ $op == 'c' ]] && [[ $c == 's' ]] && {
-    opp-s-read "linewise" opp-surround
-    return 0
+  { # TODO: parameterize
+    [[ $op == 'd' ]] && [[ $c == 's' ]] && return -1
+    [[ $op == 'c' ]] && [[ $c == 's' ]] && {opp-s-read+linewise; return $?}
   }
   opp-s-loop \
     "$op" \
     '${(@k)opp_surrounds}' \
     "$c" \
-    "$pred" \
+    "$pacc" \
     '' \
     0 \
     "$succ" \
@@ -78,7 +125,7 @@ opp-s-loop () {
   local e="$2"; local -a ks; { eval "ks=($e)" }
   local c="$3"
   local p="$4"
-  local a="$5"; "$p" "$c" a "$a"; local -i r=$?
+  local a="$5"; "$p" "$c" a "$a" "$e"; local -i r=$?
   local f="$6"
   local succ="$7"
   local fail="$8"
@@ -86,8 +133,9 @@ opp-s-loop () {
   shift 9 # At this point "$@" indicates refering the &rest argument.
 
   ((r==-255)) && { return -1 }
+  ((r==1)) && { f=0; succ=opp-surround; fail=opp-s-read-fail } # XXX: arrrgg
 
-  "$mess" "$o" "$a" "$@"
+  "$mess" "$0" "$o" "$a" "$@"
 
   opp-s-loop-1 () {
     local fn="$1"; shift
@@ -95,11 +143,11 @@ opp-s-loop () {
   }
   local -i n0; ((n0=${#${(@M)ks:#${a}}} ))
   local -i n1; ((n1=${#${(@M)ks:#${a}*}}))
-  ((n0==1)) && ((r ==0)) &&              {"$succ" "$o" "$a" "$@"; return 0} ||
-  ((n0==1)) && ((n1==1)) &&              {"$succ" "$o" "$a" "$@"; return 0} ||
-  ((n1==0)) && ((r ==0)) && ((f ==1)) && {"$succ" "$o" "$a" "$@"; return 0} ||
-  ((n1==0)) && {   opp-s-loop-1    "$fail" "$@"; return $?                } ||
-  { read -s -k 1 c;opp-s-loop-1 opp-s-loop "$@"; return $?}
+  ((n0==1)) && ((r ==0)) &&              {"$succ" "$o" "$a" "$@";return $?} ||
+  ((n0==1)) && ((n1==1)) &&              {"$succ" "$o" "$a" "$@";return $?} ||
+  ((n1==0)) && ((r ==0)) && ((f ==1)) && {"$succ" "$o" "$a" "$@";return $?} ||
+  ((n1==0)) && {   opp-s-loop-1    "$fail" "$@";return $?                 } ||
+  { read -s -k 1 c;opp-s-loop-1 opp-s-loop "$@";return $?}
 }
 
 opp-s-read-fail () {
@@ -112,28 +160,35 @@ opp-s-read-fail () {
   local succ="$7"
   local fail="$8"
   local mess="$9"
-  shift 9 # At this point "$@" indicates refering the &rest argment.
+  shift 9 # At this point "$@" indicates refering the &rest argument.
 
   # TODO: Add an appropriate code for editing the command line.
-  # XXX: Embeded the tag code for the place-holder purpose.
+  #  XXX: Embeded the tag code for the place-holder purpose.
   opp-s-read-acc-tagish () {
-    local c="$1"
-    [[ $c == "" ]] && return -255 # XXX: see opp-s-loop
-    : ${(P)2::=$3$1}
-    [[ $c == '>' ]] && return 0
+    opp-s-read-acc-base "$@";{local -i ret=$?; ((ret==255)) || return $((ret))}
+    local      c="$1"
+    local aplace="$2"
+    local avalue="$3"
+    : ${(P)aplace::=$avalue$c}
+    [[ -n ${avalue-} ]] && [[ $avalue[1] == '<' ]] && [[ $c == '>' ]] && {
+      return 0
+    }
     return -1
   }
   opp-surround-tagish () {
     local o="$1"
-    local tag1="$2"
+    local tagish="$2"; [[ $tagish == '<'* ]] || return -1
+    local tag1="$tagish"
     local tag2="</$tag1[2,-1]"
     shift 2
     [[ -z ${1-} ]] && [[ -z ${2-} ]] && {
-      "$opp_sopps[$o]" "$tag1" "$tag2"
+      "$opp_sopps[$o]" "$tag1" "$tag2"; return $?
     } || {
       opp-s-wrap-maybe $1 $2 $tag1 $tag2
     }
   }
+
+  "$mess" "$0" "$o" "$a" "$@"
 
   read -s -k 1 c
   opp-s-loop  $o $e "$c" \
@@ -143,13 +198,53 @@ opp-s-read-fail () {
 #succ fail () { echo "$0 \`$@'" }
 #opp-s-loop d '(a aa b)' a opp-s-read-accept-force-p '' succ fail
 
-# TODO: add syntax abstraction.
 typeset -A opp_surrounds; opp_surrounds=()
-opp_surrounds+=(\" opp+surround\"); opp+surround\" () { reply=('""' '""') }
-opp_surrounds+=(\"\" opp+surround\"\"); opp+surround\"\" () { reply=('"">' '<""') }
-opp_surrounds+=(\' opp+surround\'); opp+surround\' () { reply=('>>' '<<') }
+def-opp-surround-0 () {
+  local keybind="$1"
+  local       a="$2"
+  local       b="$3"
+  local     fun="$4"
+  opp_surrounds+=("$keybind" opp+surround"$keybind")
+  eval "opp+surround${(q)keybind} () { reply=(${(q)a} ${(q)b} ${(q)fun}) }"
+}
 
-# TODO: add syntax abstraction.
+def-opp-surround () {
+  def-opp-surround-0 "$1" "$2" "$3" opp-surround-sopp
+}
+
+def-opp-surround-pair () {
+  {
+    DAS () {
+      def-opp-surround "$1" "$1 " " $2"
+      def-opp-surround "$2" "$1 " " $2"
+      [[ -n ${3-} ]] && def-opp-surround "$3" "$1 " " $2"
+    }
+    local x; while read x; do
+      [[ -n $x ]] && {
+        local -a y; while read -A y; do
+          DAS "$y[1]" "$y[2]" "${y[3]-}"
+        done <<< "$x"
+      }
+    done
+  } always { unfunction DAS } <<< "$1"
+}
+
+# XXX: 'k' stands for 'bracKet'. (my taste)
+def-opp-surround-pair '
+  [ ] k
+  < >
+  ( ) b
+  { } B
+'
+
+def-opp-surround-q () {
+  local s; for s in "$@"; do
+    def-opp-surround "$s" "$s" "$s"
+  done
+}
+
+def-opp-surround-q '"' "'" '`'
+
 typeset -A opp_sopps; opp_sopps=()
 opp_sopps+=(linewise opp-surround+linewise)
 opp_sopps+=(y opp-surround+y) # TODO: link this key 'y' <=> def-oppc's 'y'
@@ -159,14 +254,20 @@ opp_sopps+=(c opp-surround+c)
 opp-surround () {
   local o="$1"
   local k="$2"
-  local -a cell; opp-s-ref $opp_surrounds[$k] cell
-  "$opp_sopps[$o]" "$cell[1]" "$cell[2]"
+  local -a box; opp-s-ref $opp_surrounds[$k] box
+  "$box[3]" "$o" "$box[1]" "$box[2]"
+}
+
+opp-surround-sopp () {
+  local o="$1"; shift
+  "$opp_sopps[$o]" "$1" "$2"
 }
 
 opp-s-ref () {
   local ebody=$1
   local place=$2
-  local -a reply; "$ebody"; eval "$place=('$reply[1]' '$reply[2]')"
+  local -a reply
+  "$ebody"; eval "$place=(${(q)reply[1]} ${(q)reply[2]} ${(q)reply[3]})"
 }
 
 opp-surround+linewise () {
@@ -194,8 +295,8 @@ opp-surround+c-1 () {
   local k="$1"
   local s1="$2"
   local s2="$3"
-  local -a cell; opp-s-ref "$opp_surrounds[$k]" cell
-  opp-s-wrap-maybe $s1 $s2 $cell[1] $cell[2]
+  local -a box; opp-s-ref "$opp_surrounds[$k]" box
+  opp-s-wrap-maybe $s1 $s2 $box[1] $box[2]
 }
 
 opp-s-wrap-maybe () {
