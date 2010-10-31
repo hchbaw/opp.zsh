@@ -345,9 +345,9 @@ opp-zcompile () {
     : ${(A)fs::=${(Mk)functions:#(*opp*)}}
     echo "#!zsh"
     echo "# NOTE: Generated from opp.zsh ($0). Please DO NOT EDIT."; echo
-    echo "$(functions \
-      ${fs:#(def-*|*register*|opp-clean|opp-install-installer|opp-zcompile|\
-        app-install)})"
+    local -a es; es=('def-*' '*register*' \
+      opp-clean opp-install-installer opp-zcompile opp-install)
+    echo "$(functions ${fs:#${~${(j:|:)es}}})"
     echo "\nopp"
   }>! ${g}
 
