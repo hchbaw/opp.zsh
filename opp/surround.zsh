@@ -6,6 +6,8 @@
 # Thank you very much, Tim Pope!
 # I want to use the surround.vim in zsh.
 
+# TODO: parameterize these 'y, c, d and s's.
+
 # Code
 
 opp_surround_opp=
@@ -27,11 +29,12 @@ def-oppc s opp+surround; opp+surround () {
 }
 
 opp-s-reading () {
+  [[ -n ${OPP_SURROUND_NOVERBOSE-} ]] || return
   local f0="$1"
   local op="$2"
   local  a="$3"
   shift 3
-  local b=;
+  local b=; # b+="$f0"
   b+="${op[1]}s"; (($#@!=0)) && { b+="{$@[1]|$@[2]}" }; b+="$a"
   zle -R "$b"
 }
@@ -44,7 +47,6 @@ opp-s-read+y () {
 opp-s-read () {
   local   op="$1"; shift
   local succ="$1"; shift
-
   # TODO: parameterize
   [[ $op == 'y' ]] && [[ $KEYS == 's' ]] && {
     opp-s-read+linewise; return $?
@@ -85,12 +87,12 @@ opp-s-read-acc-base () {
   local      c="$1"
   local aplace="$2"
   local avalue="$3"
-  [[ $c == "" ]]          && return -255 # XXX: see opp-s-loop
+  [[ $c == "" ]]          && return -255 # XXX: read interrupted
   [[ $c == "" ]]        && return 0
   [[ $c == "" ]]        && {: ${(P)aplace::=$avalue[1,-2]}; return  1}
   [[ $c != [[:print:]] ]] && return 0
   [[ -z $avalue ]]        && {: ${(P)aplace::=$avalue$c}    ; return -1}
-  return 255
+  return 255 # indicate to the caller that it did *not* return.
 }
 
 opp-s-read-2 () {
@@ -117,6 +119,8 @@ opp-s-read-2 () {
     "$succ" \
     "$fail" \
     "$mess" \
+    "$succ" \
+    "$fail" \
     "$@"
 }
 
@@ -130,16 +134,18 @@ opp-s-loop () {
   local succ="$7"
   local fail="$8"
   local mess="$9"
-  shift 9 # At this point "$@" indicates refering the &rest argument.
+  local sk="$10"
+  local fk="$11"
+  shift 11 # At this point "$@" indicates refering the &rest argument.
 
   ((r==-255)) && { return -1 }
-  ((r==1)) && { f=0; succ=opp-surround; fail=opp-s-read-fail } # XXX: arrrgg
+  ((r==   1)) && { f=0; succ=$sk; fail=$fk } # XXX: >_<
 
   "$mess" "$0" "$o" "$a" "$@"
 
   opp-s-loop-1 () {
     local fn="$1"; shift
-    "$fn" $o $e "$c" $p "$a" $f $succ $fail $mess "$@"
+    "$fn" $o $e "$c" $p "$a" $f $succ $fail $mess $sk $fk "$@"
   }
   local -i n0; ((n0=${#${(@M)ks:#${a}}} ))
   local -i n1; ((n1=${#${(@M)ks:#${a}*}}))
@@ -160,10 +166,13 @@ opp-s-read-fail () {
   local succ="$7"
   local fail="$8"
   local mess="$9"
-  shift 9 # At this point "$@" indicates refering the &rest argument.
+  local sk="$10"
+  local fk="$11"
+  shift 11 # At this point "$@" indicates refering the &rest argument.
 
   # TODO: Add an appropriate code for editing the command line.
-  #  XXX: Embeded the tag code for the place-holder purpose.
+  # XXX: Embeded the tag code for the place-holder purpose.
+  # XXX: Plese unset "opp_surrounds[<]" if you really want to see the effect.
   opp-s-read-acc-tagish () {
     opp-s-read-acc-base "$@";{local -i ret=$?; ((ret==255)) || return $((ret))}
     local      c="$1"
@@ -192,11 +201,9 @@ opp-s-read-fail () {
 
   read -s -k 1 c
   opp-s-loop  $o $e "$c" \
-    opp-s-read-acc-tagish "$a" 1 opp-surround-tagish $fail $mess "$@"
+    opp-s-read-acc-tagish "$a" 1 opp-surround-tagish \
+    $fail $mess $sk $fk "$@"
 }
-
-#succ fail () { echo "$0 \`$@'" }
-#opp-s-loop d '(a aa b)' a opp-s-read-accept-force-p '' succ fail
 
 typeset -A opp_surrounds; opp_surrounds=()
 def-opp-surround-0 () {
