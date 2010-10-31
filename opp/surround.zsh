@@ -333,3 +333,10 @@ opp-s-wrap-maybe () {
     return -1
   }
 }
+
+# opp-installer
+opp-installer-install-surround () {
+  echo "typeset -g opp_surround_opp="
+  echo ${"$(typeset -p opp_sopps)"/typeset -A/typeset -gA}
+  echo ${"$(typeset -p opp_surrounds)"/typeset -A/typeset -gA}
+}; opp-installer-add opp-installer-install-surround
