@@ -297,10 +297,10 @@ opp-install-installer () {
   local match mbegin mend
   eval ${${${"$(<=(cat <<"EOT"
     opp-install-after-load () {
-      bindkey -N opp
-      { $opps }
-      { $body }
       typeset -g opp_keybuffer
+      bindkey -N opp
+      { $opp_installer_codes }
+      { $body }
       opp_loaded_p=t
     }
     opp-install-maybe () {
@@ -319,8 +319,22 @@ EOT
     ${${(M)${(@f)"$(zle -l)"}:#(opp*)}/(#b)(*)/zle -N ${(qqq)match}} \
     "# bindkeys on the opp keymap" \
     ${(q@f)"$(bindkey -M opp -L)"})
-  }/\$opps/${"$(typeset -p opps)"/typeset -A/typeset -gA}}
+  }/\$opp_installer_codes/$(opp-installer-expand)}
 }
+
+opp_installer_codes=()
+
+opp-installer-add () { opp_installer_codes+=($1) }
+
+opp-installer-expand () {
+  local c; for c in $opp_installer_codes; do
+    "$c"
+  done
+}
+
+opp-installer-install-opps () {
+  echo ${"$(typeset -p opps)"/typeset -A/typeset -gA}
+}; opp-installer-add opp-installer-install-opps
 
 opp-zcompile () {
   #local opp_zcompiling_p=t
