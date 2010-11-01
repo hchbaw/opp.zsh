@@ -172,7 +172,7 @@ opp-s-read-fail () {
 
   # TODO: Add an appropriate code for editing the command line.
   # XXX: Embeded the tag code for the place-holder purpose.
-  # XXX: Plese unset "opp_surrounds[<]" if you really want to see the effect.
+  # XXX: Please `unset "opp_surrounds[<]"' if you want to see the effect.
   opp-s-read-acc-tagish () {
     opp-s-read-acc-base "$@";{local -i ret=$?; ((ret==255)) || return $((ret))}
     local      c="$1"
