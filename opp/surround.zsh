@@ -10,19 +10,19 @@
 
 # Code
 
-opp_surround_opp=
+opp_surround_op=
 def-oppc s opp+surround; opp+surround () {
   local op="$opp_keybuffer"
   {
-    opp_surround_opp=${opp_surround_opp:-$op}
+    opp_surround_op=${opp_surround_op:-$op}
     # TODO: parameterize
     [[ $op == 'y' ]] && {
       zle opp-recursive-edit opp-s-read+y opp-id opp-id; return $?
-    } || [[ -n $opp_surround_opp ]] && {
-      opp-s-read $opp_surround_opp opp-surround; return $?
+    } || [[ -n $opp_surround_op ]] && {
+      opp-s-read $opp_surround_op opp-surround; return $?
     }
   } always {
-    opp_surround_opp=
+    opp_surround_op=
     zle set-mark-command -n -1
     zle -R
   }
@@ -41,7 +41,7 @@ opp-s-reading () {
 
 opp-s-read+y () {
   opp-s-reading "$0" "y" ''
-  opp-s-read $opp_surround_opp opp-surround
+  opp-s-read $opp_surround_op opp-surround
 }; zle -N opp-s-read+y
 
 opp-s-read () {
@@ -350,7 +350,7 @@ opp-s-wrap-maybe () {
 
 # opp-installer
 opp-installer-install-surround () {
-  echo "typeset -g opp_surround_opp="
+  echo "typeset -g opp_surround_op="
   echo ${"$(typeset -p opp_sopps)"/typeset -A/typeset -gA}
   echo ${"$(typeset -p opp_surrounds)"/typeset -A/typeset -gA}
 }; opp-installer-add opp-installer-install-surround
