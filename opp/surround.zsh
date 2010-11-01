@@ -211,20 +211,23 @@ def-opp-surround-0 () {
   local     fun="$2"
   local       a="$3"
   local       b="$4"
+  shift 4
   opp_surrounds+=("$keybind" opp+surround"$keybind")
-  eval "opp+surround${(q)keybind} () { reply=(${(q)fun} ${(q)a} ${(q)b}) }"
+  eval \
+    "opp+surround${(q)keybind} () {reply=(${(q)fun} ${(q)a} ${(q)b} ${(q)@})}"
 }
 
 def-opp-surround () {
-  def-opp-surround-0 "$1" opp-surround-sopp "$2" "$3"
+  local k="$1" a="$2" b="$3"; shift 3
+  def-opp-surround-0 "$k" opp-surround-sopp "$a" "$b" "$@"
 }
 
 def-opp-surround-pair () {
   {
     DAS () {
-      def-opp-surround "$1" "$1 " " $2"
-      def-opp-surround "$2" "$1 " " $2"
-      [[ -n ${3-} ]] && def-opp-surround "$3" "$1 " " $2"
+      def-opp-surround "$1" "$1 " " $2" "$1" "$2"
+      def-opp-surround "$2" "$1 " " $2" "$1" "$2"
+      [[ -n ${3-} ]] && def-opp-surround "$3" "$1 " " $2" "$1" "$2"
     }
     local x; while read x; do
       [[ -n $x ]] && {
@@ -321,6 +324,7 @@ opp-s-wrap-maybe () {
   local t2="$2"
   local s1="$3"
   local s2="$4"
+  shift 4
   [[ $RBUFFER == *${s2}* ]] && [[ $LBUFFER == *${s1}* ]] && {
     [[ $RBUFFER == *${s2}* ]] && {
       local -i k=${(BS)RBUFFER#${s2}*}
@@ -338,9 +342,10 @@ opp-s-wrap-maybe () {
       zle kill-region
       LBUFFER=$LBUFFER${t1}
     }
-  } || {
-    return -1
+    return 0
   }
+  (($#@==0)) && return -1
+  opp-s-wrap-maybe "$t1" "$t2" "$@"; return $?
 }
 
 # opp-installer
