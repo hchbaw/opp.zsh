@@ -293,7 +293,9 @@ opp-surround+y () {
 }
 
 opp-surround+d () {
-  opp-s-wrap-maybe "$1" "$2" '' ''
+  local a1="$1"; shift
+  local a2="$2"; shift
+  opp-s-wrap-maybe '' '' "$a1" "$a2" "$@"
 }
 
 opp-surround+c () {
@@ -305,19 +307,20 @@ opp-surround+c-1 () {
   local k="$1"
   local s1="$2"
   local s2="$3"
+  shift 3
   local -a box; opp-s-ref "$opp_surrounds[$k]" box
   local _proc="$box[1]"
   local arg1="$box[2]"
   local arg2="$box[3]"
-  shift 3 box
-  opp-s-wrap-maybe $s1 $s2 $arg1 $arg2 "$box[@]"
+  shift 3 box # TODO: pass the 'box[@]' downward somehow.
+  opp-s-wrap-maybe $arg1 $arg2 $s1 $s2 "$@"
 }
 
 opp-s-wrap-maybe () {
-  local s1="$1"
-  local s2="$2"
-  local t1="$3"
-  local t2="$4"
+  local t1="$1"
+  local t2="$2"
+  local s1="$3"
+  local s2="$4"
   [[ $RBUFFER == *${s2}* ]] && [[ $LBUFFER == *${s1}* ]] && {
     [[ $RBUFFER == *${s2}* ]] && {
       local -i k=${(BS)RBUFFER#${s2}*}
