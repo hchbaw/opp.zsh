@@ -208,15 +208,15 @@ opp-s-read-fail () {
 typeset -A opp_surrounds; opp_surrounds=()
 def-opp-surround-0 () {
   local keybind="$1"
-  local       a="$2"
-  local       b="$3"
-  local     fun="$4"
+  local     fun="$2"
+  local       a="$3"
+  local       b="$4"
   opp_surrounds+=("$keybind" opp+surround"$keybind")
-  eval "opp+surround${(q)keybind} () { reply=(${(q)a} ${(q)b} ${(q)fun}) }"
+  eval "opp+surround${(q)keybind} () { reply=(${(q)fun} ${(q)a} ${(q)b}) }"
 }
 
 def-opp-surround () {
-  def-opp-surround-0 "$1" "$2" "$3" opp-surround-sopp
+  def-opp-surround-0 "$1" opp-surround-sopp "$2" "$3"
 }
 
 def-opp-surround-pair () {
@@ -262,19 +262,21 @@ opp-surround () {
   local o="$1"
   local k="$2"
   local -a box; opp-s-ref $opp_surrounds[$k] box
-  "$box[3]" "$o" "$box[1]" "$box[2]"
+  local f="$box[1]"
+  shift 1 box
+  "$f" "$o" "$box[@]"
 }
 
 opp-surround-sopp () {
   local o="$1"; shift
-  "$opp_sopps[$o]" "$1" "$2"
+  "$opp_sopps[$o]" "$@"
 }
 
 opp-s-ref () {
   local ebody=$1
   local place=$2
-  local -a reply
-  "$ebody"; eval "$place=(${(q)reply[1]} ${(q)reply[2]} ${(q)reply[3]})"
+  local -a reply; "$ebody"
+  eval "$place=(${(q)reply[@]})"
 }
 
 opp-surround+linewise () {
@@ -303,7 +305,8 @@ opp-surround+c-1 () {
   local s1="$2"
   local s2="$3"
   local -a box; opp-s-ref "$opp_surrounds[$k]" box
-  opp-s-wrap-maybe $s1 $s2 $box[1] $box[2]
+  shift 1 box
+  opp-s-wrap-maybe $s1 $s2 "$box[@]"
 }
 
 opp-s-wrap-maybe () {
