@@ -318,7 +318,6 @@ opp-s-wrap-maybe () {
   local s2="$2"
   local t1="$3"
   local t2="$4"
-  local fail="${5-opp-s-fail}"
   [[ $RBUFFER == *${s2}* ]] && [[ $LBUFFER == *${s1}* ]] && {
     [[ $RBUFFER == *${s2}* ]] && {
       local -i k=${(BS)RBUFFER#${s2}*}
