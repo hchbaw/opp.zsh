@@ -29,7 +29,7 @@ def-oppc s opp+surround; opp+surround () {
 }
 
 opp-s-reading () {
-  [[ -n ${OPP_SURROUND_NOVERBOSE-} ]] || return
+  [[ -n ${OPP_SURROUND_VERBOSE-} ]] || return
   local f0="$1"
   local op="$2"
   local  a="$3"
