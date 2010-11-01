@@ -294,7 +294,7 @@ opp-surround+y () {
 
 opp-surround+d () {
   local a1="$1"; shift
-  local a2="$2"; shift
+  local a2="$1"; shift
   opp-s-wrap-maybe '' '' "$a1" "$a2" "$@"
 }
 
