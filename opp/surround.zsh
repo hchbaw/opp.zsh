@@ -262,9 +262,11 @@ opp-surround () {
   local o="$1"
   local k="$2"
   local -a box; opp-s-ref $opp_surrounds[$k] box
-  local f="$box[1]"
-  shift 1 box
-  "$f" "$o" "$box[@]"
+  local proc="$box[1]"
+  local arg1="$box[2]"
+  local arg2="$box[3]"
+  shift 3 box
+  "$proc" "$o" "$arg1" "$arg2" "$box[@]"
 }
 
 opp-surround-sopp () {
@@ -275,8 +277,7 @@ opp-surround-sopp () {
 opp-s-ref () {
   local ebody=$1
   local place=$2
-  local -a reply; "$ebody"
-  eval "$place=(${(q)reply[@]})"
+  local -a reply; "$ebody"; eval "$place=(${(q)reply[@]})"
 }
 
 opp-surround+linewise () {
@@ -305,8 +306,11 @@ opp-surround+c-1 () {
   local s1="$2"
   local s2="$3"
   local -a box; opp-s-ref "$opp_surrounds[$k]" box
-  shift 1 box
-  opp-s-wrap-maybe $s1 $s2 "$box[@]"
+  local _proc="$box[1]"
+  local arg1="$box[2]"
+  local arg2="$box[3]"
+  shift 3 box
+  opp-s-wrap-maybe $s1 $s2 $arg1 $arg2 "$box[@]"
 }
 
 opp-s-wrap-maybe () {
