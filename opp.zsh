@@ -20,7 +20,7 @@
 # % source ~/.zsh/zfunc/opp-install; opp-install
 
 # Note:
-# This script replaces vicmd kepmap entries. Please beware of.
+# This script replaces vicmd kepmap entries(c, d and y). Please beware of.
 
 # Extension:
 
