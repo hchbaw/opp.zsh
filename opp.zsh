@@ -36,6 +36,10 @@
 
 # History
 
+# v0.0.5
+# Add opp/textobj-between.zsh
+# Add `opp-installer-add' for the extentions.
+
 # v0.0.4
 # Add textobj-between link.
 
