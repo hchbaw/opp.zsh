@@ -1,5 +1,8 @@
-#!zsh
-# textobj-between code.
+# textobj-between code for opp.zsh.
+
+# Author Takeshi Banse <takebi@laafc.net>
+# Licence: Public Domain
+
 # Thank you very much, thinca and tarao!
 #
 # http://d.hatena.ne.jp/thinca/20100614/1276448745

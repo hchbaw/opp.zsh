@@ -24,7 +24,7 @@
 
 # Extension:
 
-# textobj-between (http://gist.github.com/628951)
+# opp/textobj-between.zsh
 # http://d.hatena.ne.jp/thinca/20100614/1276448745
 # http://d.hatena.ne.jp/tarao/20100715/1279185753
 # Thank you very much, thinca and tarao!
