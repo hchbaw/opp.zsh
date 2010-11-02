@@ -100,7 +100,7 @@ def-opp-skip opp-skip-alpunum-forward  ++ +1 "[[:alnum:][:punct:]]"
 opp-generic-w () {
   zparseopts -D 1+:=fun1 2+:=fun2
   local beg end fun
-  local -a fs; fs=(${=fun1})
+  local -a fs
   fs=(${=fun1}); for fun in ${fs:#-1}; do "$fun"; done; ((beg=$CURSOR))
   fs=(${=fun2}); for fun in ${fs:#-2}; do "$fun"; done; ((end=$CURSOR))
   "$@" $beg $end
