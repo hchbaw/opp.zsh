@@ -38,7 +38,7 @@
 
 # v0.0.5
 # Add opp/textobj-between.zsh
-# Add `opp-installer-add' for the extentions.
+# Add `opp-installer-add' for the extensions.
 # Add aw aW iW and fix iw.
 
 # v0.0.4
