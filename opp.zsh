@@ -32,13 +32,14 @@
 # TODO: in case these (ci" with improper double quotes) situations.
 # TODO: operator (currently c, d and y)
 # TODO: o_v o_V o_CTRL_V
-# TODO: aw aW iW as is op ip at it
+# TODO: as is op ip at it
 
 # History
 
 # v0.0.5
 # Add opp/textobj-between.zsh
 # Add `opp-installer-add' for the extentions.
+# Add aw aW iW and fix iw.
 
 # v0.0.4
 # Add textobj-between link.
