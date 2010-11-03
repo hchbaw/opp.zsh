@@ -84,7 +84,8 @@ def-oppc () {
 
 def-opp-skip () {
   eval "$(cat <<EOT
-    $1 () { while [[ \$BUFFER[((CURSOR$3))] == $4 ]] do ((CURSOR$2)) done }
+    $1 () { while [[ \${BUFFER[((CURSOR$3))]-} == $4 ]] do ((CURSOR$2)) done }
+    zle -N $1
 EOT
   )"
 }
