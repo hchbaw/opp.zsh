@@ -66,6 +66,7 @@ def-oppc s opp+surround; opp+surround () {
     opp_surround_op=
     zle set-mark-command -n -1
     zle -R
+    succ=vi-cmd-mode # TODO: THIS IS VERY BAD
   }
 }
 
