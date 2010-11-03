@@ -1,4 +1,4 @@
-<img src="http://github.com/hchbaw/opp.zsh/raw/readme/ciw.png" />
+<img src="https://github.com/hchbaw/opp.zsh/raw/readme/ciw.png" />
 
 <pre>
 vim's text-objects-ish for zsh.
@@ -31,6 +31,10 @@ http://d.hatena.ne.jp/thinca/20100614/1276448745
 http://d.hatena.ne.jp/tarao/20100715/1279185753
 Thank you very much, thinca and tarao!
 
+opp/surround.zsh
+Thank you very much tpope!
+http://www.vim.org/scripts/script.php?script_id=1697
+
 TODO: in case these (ci" with improper double quotes) situations.
 TODO: operator (currently c, d and y)
 TODO: o_v o_V o_CTRL_V
@@ -38,9 +42,12 @@ TODO: as is op ip at it
 
 History
 
+v0.0.6
+Add opp/surround.zsh
+
 v0.0.5
 Add opp/textobj-between.zsh
-Add `opp-installer-add' for the extentions.
+Add `opp-installer-add' for the extensions.
 Add aw aW iW and fix iw.
 
 v0.0.4
