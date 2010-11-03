@@ -10,7 +10,7 @@ declare -a T
 : ${(A)T::=${T//&gt;8/8<}}
 
 cat <<EOT
-<img src="http://github.com/hchbaw/opp.zsh/raw/readme/ciw.png" />
+<img src="https://github.com/hchbaw/opp.zsh/raw/readme/ciw.png" />
 
 <pre>
 $(print -l $T)
