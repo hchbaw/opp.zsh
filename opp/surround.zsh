@@ -6,7 +6,48 @@
 # Thank you very much, Tim Pope!
 # I want to use the surround.vim in zsh.
 
+# Configuration
+# Predefined targets as follows,
+#
+# Eight punctiation marks with aliased by, (k is my taste)
+#   [ ]  < >  ( )  { }
+#     k         b    B
+# When insertion,
+#   [, <, ( and { will add the pairs with one whitespace
+#   ], >, ) and } will add the pairs without whitespaces
+#   k,    b and B will add the pairs without whitespaces
+# When deletion,
+#   [, <, ( and { will remove the pairs with stripping any whitespaces
+#   ], >, ) and } will remove the pairs without stripping
+#   k,    b and B will remove the pairs without stripping
+#
+# and three quate marks.
+#   " ' `
+#
+# To customize the surroundings, you can use the function `def-opp-surround'.
+#   def-opp-surround KEYBINDING LEFT RIGHT STRIPP(t|nil)
+# For example,
+# % def-opp-surround '${' '${' '}' t
+# will associate a keybinding '${' to replace the pair # '${','}'.
+# You will get the followings,
+#   Old text              Command  New text
+#   "Hello ${ w*orld }!"  ds${     Hello world!
+#   "Hello ${w*orld}!"    ds${     Hello world!
+#   "Hello ${w*orld}!"    cs${'    Hello 'world'!
+#   "Hello w*orld!"       ysiw${   Hello ${world}!
+# (An asterisk (*) is used to denote the cursor position.)
+#
+# STRIPP (t|nil) controls the whitespace retaining/stripping behavior.
+# If you use 'nil' instead of 't', for example,
+# % def-opp-surround '${' '${' '}' nil
+# You will get the following,
+#   Old text              Command  New text
+#   "Hello ${ w*orld }!"  ds${     Hello  world !
+# Please notice that the whitespaces surrounding the "world" are not
+# stripped in this case.
+
 # TODO: parameterize these 'y, c, d and s's.
+# TODO: insert mode mappings.
 
 # Code
 
@@ -170,6 +211,18 @@ opp-s-read-fail () {
   local fk="$11"
   shift 11 # At this point "$@" indicates refering the &rest argument.
 
+  opp-surround-tagish () {
+    local o="$1"
+    local tagish="$2"; [[ $tagish == '<'* ]] || return -1
+    local tag1="$tagish"
+    local tag2="</$tag1[2,-1]"
+    shift 2
+    [[ -z ${1-} ]] && [[ -z ${2-} ]] && {
+      "$opp_sopps[$o]" "$tag1" "$tag2"; return $?
+    } || {
+      opp-s-wrap-maybe nil $tag1 $tag2 $1 $2
+    }
+  }
   # TODO: Add an appropriate code for editing the command line.
   # XXX: Embeded the tag code for the place-holder purpose.
   # XXX: Please `unset "opp_surrounds[<]"' if you want to see the effect.
@@ -184,17 +237,9 @@ opp-s-read-fail () {
     }
     return -1
   }
-  opp-surround-tagish () {
-    local o="$1"
-    local tagish="$2"; [[ $tagish == '<'* ]] || return -1
-    local tag1="$tagish"
-    local tag2="</$tag1[2,-1]"
-    shift 2
-    [[ -z ${1-} ]] && [[ -z ${2-} ]] && {
-      "$opp_sopps[$o]" "$tag1" "$tag2"; return $?
-    } || {
-      opp-s-wrap-maybe $1 $2 $tag1 $tag2
-    }
+  [[ $o == 'c' ]] && (($#@!=0)) && [[ -n $c ]] &&
+  [[ $c != '<' ]] && [[ $a[1] != '<' ]] && [[ $c != '>' ]]  && {
+    opp-s-wrap-maybe nil $c $c "$@"; return $?
   }
 
   "$mess" "$0" "$o" "$a" "$@"
@@ -206,28 +251,41 @@ opp-s-read-fail () {
 }
 
 typeset -A opp_surrounds; opp_surrounds=()
-def-opp-surround-0 () {
+def-opp-surround-raw () {
   local keybind="$1"
   local     fun="$2"
   local       a="$3"
   local       b="$4"
-  shift 4
+  local  stripp="$5"
+  shift 5
   opp_surrounds+=("$keybind" opp+surround"$keybind")
-  eval \
-    "opp+surround${(q)keybind} () {reply=(${(q)fun} ${(q)a} ${(q)b} ${(q)@})}"
+  eval "$(cat <<EOT
+    opp+surround${(q)keybind} () {
+      reply=(${(q)fun} ${(q)a} ${(q)b} ${(q)stripp} ${(q)@})
+    }
+EOT
+  )"
+}
+
+def-opp-surround-0 () {
+  local k="$1" a="$2" b="$3" sp="$4"; shift 4
+  def-opp-surround-raw "$k" opp-surround-sopp "$a" "$b" "$sp" "$@"
 }
 
 def-opp-surround () {
-  local k="$1" a="$2" b="$3"; shift 3
-  def-opp-surround-0 "$k" opp-surround-sopp "$a" "$b" "$@"
+  local k="$1" a="$2" b="$3"
+  local sp;
+  (($#@==3)) && { sp=nil       ; shift 3}
+  (($#@==4)) && { sp="${4-nil}"; shift 4}
+  def-opp-surround-0 "$k" "$a" "$b" "$sp" "$@"
 }
 
 def-opp-surround-pair () {
   {
     DAS () {
-      def-opp-surround "$1" "$1 " " $2" "$1" "$2"
-      def-opp-surround "$2" "$1 " " $2" "$1" "$2"
-      [[ -n ${3-} ]] && def-opp-surround "$3" "$1 " " $2" "$1" "$2"
+      def-opp-surround "$1" "$1 " " $2" t
+      def-opp-surround "$2" "$1" "$2" nil
+      [[ -n ${3-} ]] && def-opp-surround "$3" "$1" "$2" nil
     }
     local x; while read x; do
       [[ -n $x ]] && {
@@ -249,7 +307,7 @@ def-opp-surround-pair '
 
 def-opp-surround-q () {
   local s; for s in "$@"; do
-    def-opp-surround "$s" "$s" "$s"
+    def-opp-surround "$s" "$s" "$s" nil
   done
 }
 
@@ -265,11 +323,12 @@ opp-surround () {
   local o="$1"
   local k="$2"
   local -a box; opp-s-ref $opp_surrounds[$k] box
-  local proc="$box[1]"
-  local arg1="$box[2]"
-  local arg2="$box[3]"
-  shift 3 box
-  "$proc" "$o" "$arg1" "$arg2" "$box[@]"
+  local   proc="$box[1]"
+  local   arg1="$box[2]"
+  local   arg2="$box[3]"
+  local stripp="$box[4]"
+  shift 4 box
+  "$proc" "$o" "$arg1" "$arg2" "$stripp" "$box[@]"
 }
 
 opp-surround-sopp () {
@@ -298,7 +357,8 @@ opp-surround+y () {
 opp-surround+d () {
   local a1="$1"; shift
   local a2="$1"; shift
-  opp-s-wrap-maybe '' '' "$a1" "$a2" "$@"
+  local sp="$1"; shift
+  opp-s-wrap-maybe "$sp" '' '' "$a1" "$a2" "$@"
 }
 
 opp-surround+c () {
@@ -307,28 +367,40 @@ opp-surround+c () {
 
 opp-surround+c-1 () {
   shift
-  local k="$1"
+  local  k="$1"
   local s1="$2"
   local s2="$3"
-  shift 3
-  local -a box; opp-s-ref "$opp_surrounds[$k]" box
-  local _proc="$box[1]"
-  local arg1="$box[2]"
-  local arg2="$box[3]"
-  shift 3 box # TODO: pass the 'box[@]' downward somehow.
-  opp-s-wrap-maybe $arg1 $arg2 $s1 $s2 "$@"
+  local sp="$4"
+  shift 4
+  [[ -n "$opp_surrounds[$k]" ]] && {
+    local -a box; opp-s-ref "$opp_surrounds[$k]" box
+    local   _proc="$box[1]"
+    local    arg1="$box[2]"
+    local    arg2="$box[3]"
+    local _stripp="$box[4]"
+    shift 4 box # TODO: pass the 'box[@]' downward somehow.
+    opp-s-wrap-maybe $sp $arg1 $arg2 $s1 $s2 "$@"
+  } || {
+    opp-s-wrap-maybe $sp $k $k $s1 $s2 "$@"
+  }
 }
 
 opp-s-wrap-maybe () {
-  local t1="$1"
-  local t2="$2"
-  local s1="$3"
-  local s2="$4"
-  shift 4
+  local sp="$1"
+  local t1="$2"
+  local t2="$3"
+  local s1="$4"
+  local s2="$5"
+  shift 5
   [[ $RBUFFER == *${s2}* ]] && [[ $LBUFFER == *${s1}* ]] && {
     [[ $RBUFFER == *${s2}* ]] && {
       local -i k=${(BS)RBUFFER#${s2}*}
       CURSOR+=k; ((CURSOR--))
+      [[ $sp == t ]] && {
+        zle set-mark-command
+        opp-skip-blank-backward
+        zle kill-region
+      }
       zle set-mark-command
       CURSOR+=${#s2}
       zle kill-region
@@ -339,13 +411,14 @@ opp-s-wrap-maybe () {
       CURSOR=k; ((CURSOR--))
       zle set-mark-command
       CURSOR+=${#s1}
+      [[ $sp == t ]] && opp-skip-blank-forward
       zle kill-region
       LBUFFER=$LBUFFER${t1}
     }
     return 0
   }
   (($#@==0)) && return -1
-  opp-s-wrap-maybe "$t1" "$t2" "$@"; return $?
+  opp-s-wrap-maybe "$sp" "$t1" "$t2" "$@"; return $?
 }
 
 # opp-installer
