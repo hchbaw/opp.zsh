@@ -432,6 +432,27 @@ opp-copy-region () {
   with-opp-regioned zle copy-region-as-kill
 }; zle -N opp-copy-region
 
+opp-regioned-buffer-each () {
+  local i; for i in {$((MARK+1))..$((CURSOR))}; do
+    local c=$BUFFER[$i]
+    "$@" $i "$c"
+  done
+}
+
+opp-regioned-buffer-each~ () { with-opp-regioned opp-regioned-buffer-each "$@" }
+
+opp-swap-case-region-0 () {
+  local -i i=$1; local c="$2"
+  case "$c" in
+    ([[:lower:]]) BUFFER[$i]="${(U)c}" ;;
+    ([[:upper:]]) BUFFER[$i]="${(L)c}" ;;
+  esac
+}
+
+opp-swap-case-region () {
+  opp-regioned-buffer-each~ opp-swap-case-region-0
+}; zle -N opp-swap-case-region
+
 opp-register-zle () {
   eval "$1 () { zle opp-recursive-edit -- $2 $3 $4 ${5:=nil} }; zle -N $1"
 }
@@ -439,6 +460,27 @@ opp-register-zle () {
 opp-register-zle opp-vi-change kill-region vi-change vi-insert
 opp-register-zle opp-vi-delete kill-region vi-delete opp-id
 opp-register-zle opp-vi-yank opp-copy-region vi-yank opp-id
+
+opp-register-zle-operator-mimic () { opp-register-zle "$1" "$2" "$2" "$3" t }
+
+opp-register-zle-operator-mimic opp-vi-tilde opp-swap-case-region opp-id
+
+opp-register-zle-operator-mimic-case () {
+  local case="$1" buffexpnflags="$2"
+  eval "$(cat <<EOT
+    opp-${case}-case-region-0 () {
+      BUFFER[\$1]="\${${buffexpnflags}2}"
+    }
+    opp-${case}-case-region () {
+      opp-regioned-buffer-each~ opp-${case}-case-region-0
+    }; zle -N opp-${case}-case-region
+    opp-register-zle-operator-mimic \
+     opp-vi-${case}case opp-${case}-case-region opp-id
+EOT
+  )"
+}
+opp-register-zle-operator-mimic-case upper "(U)"
+opp-register-zle-operator-mimic-case lower "(L)"
 
 # Entry point.
 typeset -gA opp_operators; opp_operators=()
@@ -461,6 +503,9 @@ opp-install () {
     BK "c" opp-vi-change
     BK "d" opp-vi-delete
     BK "y" opp-vi-yank
+    BK "~" opp-vi-tilde
+    BK "gU" opp-vi-uppercase
+    BK "gu" opp-vi-lowercase
     { "$@" }
   } always {
     unfunction BK
