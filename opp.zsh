@@ -209,29 +209,65 @@ opp-generic () {
   "$@" $beg $end
 }
 
+opp-generic-pair-scan () {
+  local -i  pos="${1}"
+  local       a="${2}"
+  local       b="${3}"
+  local     buf="${4}"
+  local     suc="${5}"
+  local -i nest="${6}"
+  local   place="${7}"
+
+  ((pos==0))           && return -1
+  ((pos==(($#buf+1)))) && return -1
+
+  opp-generic-pair-scan-1 () {
+    local newnest="$1"
+    opp-generic-pair-scan $((pos $suc)) $a $b "$buf" "$suc" $newnest $place
+    return $?
+  }
+
+  [[ $buf[$pos] == $a ]] && {
+    ((nest==0)) && { : ${(P)place::=$pos}; return 0 } ||
+    opp-generic-pair-scan-1 $((nest-1)); return $?
+  } ||
+  [[ $buf[$pos] == $b ]] && {
+    opp-generic-pair-scan-1 $((nest+1)); return $?
+  }
+  opp-generic-pair-scan-1 $nest; return $?
+}
+
 def-oppc-pair-1 () {
   local -a xs; : ${(A)xs::=${(s; ;)1}}
   local a=$xs[1]    # '('
   local b=$xs[2]    # ')'
   local c=${xs[3]-} # 'b' (optional)
   eval "$(cat <<EOT
-    opp-fpcs-${(q)a} () { zle -U ${(q)a}; zle vi-find-prev-char-skip }
-    opp-fnc-${(q)b}  () { zle -U ${(q)b}; zle vi-find-next-char      }
-    zle -N opp-fpcs-${(q)a}
-    zle -N opp-fnc-${(q)b}
+    opp-gps-${(q)a} () {
+      local k
+      opp-generic-pair-scan \$CURSOR ${(q)a} ${(q)b} \$BUFFER -1 0 k
+      ((\$?==0)) && CURSOR=\$k
+    }
+    zle -N opp-gps-${(q)a}
+    opp-gps-${(q)b} () {
+      local k
+      opp-generic-pair-scan "\$((\$CURSOR+1))" ${(q)b} ${(q)a} \$BUFFER +1 0 k
+      ((\$?==0)) && ((CURSOR=\$k - 1))
+    }
+    zle -N opp-gps-${(q)b}
 
     def-oppc i${(q)a}; def-oppc i${(q)b}; ${c:+def-oppc i${(q)c}}
     opp+i${(q)a} opp+i${(q)b} ${c:+opp+i${(q)c}} () {
       opp-generic \
-        -0 opp-fpcs-${(q)a} \
-        -0 opp-fnc-${(q)b} \
+        -0 opp-gps-${(q)a} \
+        -0 opp-gps-${(q)b} \
         "\$@"
     }
     def-oppc a${(q)a}; def-oppc a${(q)b}; ${c:+def-oppc a${(q)c}}
     opp+a${(q)a} opp+a${(q)b} ${c:+opp+a${(q)c}} () {
       opp-generic \
-        -1 opp-fpcs-${(q)a} \
-        +1 opp-fnc-${(q)b} \
+        -1 opp-gps-${(q)a} \
+        +1 opp-gps-${(q)b} \
         "\$@"
     }
 EOT
