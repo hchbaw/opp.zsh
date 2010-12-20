@@ -344,7 +344,12 @@ opp-s-ref () {
 }
 
 opp-surround+linewise () {
-  BUFFER="$1"$BUFFER"$2"
+  zle vi-goto-column -n 0
+  [[ ${BUFFER[((CURSOR+1))]-} == [[:blank:]] ]] && opp-skip-blank-forward
+  RBUFFER="${1}$RBUFFER"
+  zle vi-goto-column -n 0; zle end-of-line
+  [[ ${BUFFER[((CURSOR+0))]-} == [[:blank:]] ]] && opp-skip-blank-backward
+  LBUFFER="$LBUFFER${2}"
 }
 
 opp-surround+y () {
