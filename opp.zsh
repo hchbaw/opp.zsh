@@ -68,7 +68,7 @@ typeset -A opps; opps=()
 opp_keybuffer=
 
 opp-accept-p () {
-  [[ $KEYS != *[0-9] ]]    && return 1
+  [[ $KEYS != *[1-9] ]]    && return 1
   [[ -n ${opps[$KEYS]-} ]] && return 0
   return -1
 }
@@ -298,17 +298,10 @@ with-opp () {
   {
     zle -N undefined-key opp-undefined-key
     opp_keybuffer=$KEYS
-    "$@" "$opp_keybuffer"
+    "$@[1,-2]" "$opp_keybuffer" "$5"
   } always {
     zle -N undefined-key opp-id # TODO: anything better?
   }
-}
-
-opp-linewise () {
-  zle beginning-of-line
-  zle set-mark-command
-  zle end-of-line
-  zle "$1"
 }
 
 opp-recursive-edit-1 () {
@@ -316,21 +309,101 @@ opp-recursive-edit-1 () {
   local fail="${2}"
   local succ="${3}"
   local   op="${4}"
+  local mopp="${5}" # Mimic the OPerator or not.
   zle recursive-edit -K opp && {
     ${opps[$KEYS]} opp-k $oppk
     zle $succ
   } || {
-    local arg=$opp_keybuffer[2,-1]
+    local arg=$opp_keybuffer[(($#op+1)),-1]
     [[ -n $arg ]] && {
-      if [[ $arg == $op ]]; then
-        opp-linewise $oppk
-        zle $succ
-      else
-        zle -U "$arg"
-        zle $fail
-      fi
+      opp-read-motion "$op" "$arg[-1]" "$arg" \
+        opp-linewise~ opp-motion "$oppk" "$succ" "$fail" "$mopp"
     }
   }
+}
+
+opp-read-motion () {
+  local   op="${1}"; shift
+  local   cc="${1}"; shift
+  local  acc="${1}"; shift
+  local succ="${1}"; shift
+  local fail="${1}"; shift
+  [[ $op  == $acc   ]] && {"$succ" "$op" "$acc"   "$@";return $?} ||
+  { opp-read-motion-p "$acc[1]" } &&
+  { local c;read -s -k 1 c;"$fail" "$op" "$acc$c" "$@";return $?} ||
+  [[ $op != "$acc"* ]] && {"$fail" "$op" "$acc"   "$@";return $?} ||
+  [[ $cc == ''      ]] && {"$fail" "$op" "$acc"   "$@";return $?} ||
+  [[ $op == "$acc"* ]] && {
+    local c;read -s -k 1 c
+    opp-read-motion "$op" "$c" "$acc$c" "$succ" "$fail" "$@";return $?
+  }
+}
+
+opp-read-motion-p () {
+  # TODO: This may not be enough.
+  local c="${1}"
+  [[ $c == 't' ]] && return 0
+  [[ $c == 'T' ]] && return 0
+  [[ $c == 'f' ]] && return 0
+  [[ $c == 'F' ]] && return 0
+  [[ $c == "'" ]] && return 0
+  [[ $c == 'g' ]] && return 0
+  [[ $c == '[' ]] && return 0
+  [[ $c == ']' ]] && return 0
+  return 1
+}
+
+opp-linewise () {
+  zle vi-goto-column -n 0
+  zle set-mark-command
+  zle end-of-line
+  zle "$1"
+}
+
+opp-linewise~ () {
+  local   _op="${1}"
+  local  _arg="${2}"
+  local appk="${3}"
+  local succ="${4}"
+  opp-linewise $oppk
+  zle $succ
+}
+
+opp-oneshot-region () {
+  local fn="$1"
+  local c0="$2"
+  local c1=$CURSOR
+  local c2="$2"
+  (($c0 < $c1)) || { local tmp=$c0; c0=$c1; c1=$tmp }
+  CURSOR=$c0
+  zle set-mark-command
+  CURSOR=$c1
+  zle $fn
+  CURSOR=$c2
+}
+
+opp-motion () {
+  local   _op="${1}"
+  local  arg="${2}"
+  local _appk="${3}"
+  local _succ="${4}"
+  local fail="${5}"
+  local mopp="${6}"
+  if [[ ${mopp} == t ]]; then
+    # Execute the ${fail} function after *THIS* zle widget finished
+    # because of the use of a "zle -U" to mimic the operators.
+    OPP_ONESHOT_KEY="\033[999~"
+    eval "
+      opp+oneshot+ () {
+        bindkey -M $KEYMAP -r '$OPP_ONESHOT_KEY'
+        opp-oneshot-region $fail \"$CURSOR\"
+      }; zle -N opp+oneshot+"
+    bindkey -M $KEYMAP "$OPP_ONESHOT_KEY" opp+oneshot+
+    zle -U "${arg}$OPP_ONESHOT_KEY"
+  else
+    zle -U "$arg"
+    zle $fail
+  fi
 }
 
 opp-recursive-edit () {
@@ -360,7 +433,7 @@ opp-copy-region () {
 }; zle -N opp-copy-region
 
 opp-register-zle () {
-  eval "$1 () { zle opp-recursive-edit -- $2 $3 $4 }; zle -N $1"
+  eval "$1 () { zle opp-recursive-edit -- $2 $3 $4 ${5:=nil} }; zle -N $1"
 }
 
 opp-register-zle opp-vi-change kill-region vi-change vi-insert
@@ -470,7 +543,7 @@ opp-zcompile () {
     echo "#!zsh"
     echo "# NOTE: Generated from opp.zsh ($0). Please DO NOT EDIT."; echo
     local -a es; es=('def-*' '*register*' 'opp-installer-*' \
-      opp-clean opp-install-installer opp-zcompile opp-install)
+      opp-clean opp-install-installer opp-zcompile opp-install opp+oneshot+)
     echo "$(functions ${fs:#${~${(j:|:)es}}})"
     echo "\nopp"
   }>! ${g}

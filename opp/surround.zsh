@@ -58,7 +58,7 @@ def-oppc s opp+surround; opp+surround () {
     opp_surround_op=${opp_surround_op:-$op}
     # TODO: parameterize
     [[ $op == 'y' ]] && {
-      zle opp-recursive-edit opp-s-read+y opp-id opp-id; return $?
+      zle opp-recursive-edit opp-s-read+y opp-id opp-id nil; return $?
     } || [[ -n $opp_surround_op ]] && {
       opp-s-read $opp_surround_op opp-surround; return $?
     }
