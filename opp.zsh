@@ -346,9 +346,17 @@ opp-k () {
 
 opp-id () { "$@" }; zle -N opp-id
 
+with-opp-regioned () {
+  ((REGION_ACTIVE)) || return
+  {
+    "$@"
+  } always {
+    zle set-mark-command -n -1
+  }
+}
+
 opp-copy-region () {
-  zle copy-region-as-kill
-  zle set-mark-command -n -1
+  with-opp-regioned zle copy-region-as-kill
 }; zle -N opp-copy-region
 
 opp-register-zle () {
