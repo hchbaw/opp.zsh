@@ -362,7 +362,6 @@ opp-surround+y () {
   zle exchange-point-and-mark
   LBUFFER="${LBUFFER}${1}"
   zle set-mark-command -n -1
-  ((CURSOR--))
 }
 
 opp-surround+d () {
