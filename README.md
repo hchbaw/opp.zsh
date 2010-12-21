@@ -12,17 +12,28 @@ I want to use the vim's text-objects in zsh.
 To use this,
 1) source this file.
 % source opp.zsh
+2) If you wish to load the extentions, source them afterward.
+% source opp/*.zsh
 *Optionally* you can use the zcompiled file with the autoloading for a
 little faster loading on every shell startup, if you zcompile the
 necessary functions.
-*1) zcompile the defined functions and the install command.
-(generates ~/.zsh/zfunc/{opp,opp-install}.zwc)
-% O=~/path/to/opp.zsh; (zsh -c "source $O && opp-zcompile $O ~/.zsh/zfunc")
-*2) source the zcompiled install command file insted of this file.
-% source ~/.zsh/zfunc/opp-install; opp-install
+*1) Prepare zcompiling the defined functions and the install command.
+% OS=(~/path/to/opp.zsh/{opp.zsh,opp/*.zsh})
+*2) If you have some opp/surround.zsh's configurations, those
+configurations could be zcompiled at this point. Assuming you have such a
+configuration file in ~/.zsh/opp-surround.zsh, you could do this.
+% OS=(~/path/to/opp.zsh/{opp.zsh,opp/*.zsh} ~/.zsh/opp-surround.zsh(N))
+*3) Generate the ~/.zsh/zfunc/{opp,opp-install}.zwc.
+% (zsh -c "for O in $OS;do . $O;done && opp-zcompile $OS[1] ~/.zsh/zfunc"
+*4) Source the zcompiled install command file insted of this file, and
+set up an autaload clause apprpriately.
+% { . ~/.zsh/zfunc/opp-install; opp-install }
+% autoload opp
 
 Note:
-This script replaces vicmd kepmap entries(c, d and y). Please beware of.
+This script replaces below vicmd kepmap entries.
+  ~, c, d, gu, gU and y
+Please beware of.
 
 Extension:
 
@@ -36,7 +47,7 @@ Thank you very much tpope!
 http://www.vim.org/scripts/script.php?script_id=1697
 
 TODO: in case these (ci" with improper double quotes) situations.
-TODO: operator (currently c, d and y)
+TODO: operator (currently ~, c, d, gu, gU and y)
 TODO: o_v o_V o_CTRL_V
 TODO: as is op ip at it
 
