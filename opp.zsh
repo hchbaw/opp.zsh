@@ -332,6 +332,8 @@ def-oppc-inbetween '"' "'" '`'
 
 with-opp () {
   {
+    emulate -L zsh
+    setopt extended_glob
     zle -N undefined-key opp-undefined-key
     opp_keybuffer=$KEYS
     "$@[1,-2]" "$opp_keybuffer" "$5"
@@ -364,9 +366,12 @@ opp-read-motion () {
   local  acc="${1}"; shift
   local succ="${1}"; shift
   local fail="${1}"; shift
+
   [[ $op  == $acc   ]] && {"$succ" "$op" "$acc"   "$@";return $?} ||
-  { opp-read-motion-p "$acc[1]" } &&
-  { local c;read -s -k 1 c;"$fail" "$op" "$acc$c" "$@";return $?} ||
+  { opp-read-motion-p "$cc" "$acc" } && {
+    local c;read -s -k 1 c
+    opp-read-motion "$op" "$c" "$acc$c" "$succ" "$fail" "$@";return $?
+  } ||
   [[ $op != "$acc"* ]] && {"$fail" "$op" "$acc"   "$@";return $?} ||
   [[ $cc == ''      ]] && {"$fail" "$op" "$acc"   "$@";return $?} ||
   [[ $op == "$acc"* ]] && {
@@ -376,8 +381,15 @@ opp-read-motion () {
 }
 
 opp-read-motion-p () {
-  # TODO: This may not be enough.
-  local c="${1}"
+  local   c="${1}"
+  local acc="${2}"
+  local -a match mbegin mend
+  local -i len=${#acc/*[[:digit:]](#b)(*)/$match}
+  ((len==1)) ||\
+    # Already read a motion char. This prevents an infinite looping
+    # like 'dttt...'.
+    return 1
+  # TODO: This may not be enough, or may be too much.
   [[ $c == 't' ]] && return 0
   [[ $c == 'T' ]] && return 0
   [[ $c == 'f' ]] && return 0
