@@ -259,10 +259,15 @@ def-opp-surround-raw () {
   local       b="$4"
   local  stripp="$5"
   shift 5
+  local expanded=
+  local x; for x in $@; do
+    expanded+="reply+=${(q)x};"
+  done
   opp_surrounds+=("$keybind" opp+surround"$keybind")
   eval "$(cat <<EOT
     opp+surround${(q)keybind} () {
-      reply=(${(q)fun} ${(q)a} ${(q)b} ${(q)stripp} ${(q)@})
+      reply=(${(q)fun} ${(q)a} ${(q)b} ${(q)stripp})
+      ${expanded}
     }
 EOT
   )"
@@ -277,14 +282,14 @@ def-opp-surround () {
   local k="$1" a="$2" b="$3"
   local sp;
   (($#@==3)) && { sp=nil       ; shift 3}
-  (($#@==4)) && { sp="${4-nil}"; shift 4}
+  (($#@>=4)) && { sp="${4-nil}"; shift 4}
   def-opp-surround-0 "$k" "$a" "$b" "$sp" "$@"
 }
 
 def-opp-surround-pair () {
   {
     DAS () {
-      def-opp-surround "$1" "$1 " " $2" t
+      def-opp-surround "$1" "$1 " " $2" t "$1" "$2"
       def-opp-surround "$2" "$1" "$2" nil
       [[ -n ${3-} ]] && def-opp-surround "$3" "$1" "$2" nil
     }
@@ -344,7 +349,12 @@ opp-s-ref () {
 }
 
 opp-surround+linewise () {
-  BUFFER="$1"$BUFFER"$2"
+  zle vi-goto-column -n 0
+  [[ ${BUFFER[((CURSOR+1))]-} == [[:blank:]] ]] && opp-skip-blank-forward
+  RBUFFER="${1}$RBUFFER"
+  zle vi-goto-column -n 0; zle end-of-line
+  [[ ${BUFFER[((CURSOR+0))]-} == [[:blank:]] ]] && opp-skip-blank-backward
+  LBUFFER="$LBUFFER${2}"
 }
 
 opp-surround+y () {
@@ -352,7 +362,6 @@ opp-surround+y () {
   zle exchange-point-and-mark
   LBUFFER="${LBUFFER}${1}"
   zle set-mark-command -n -1
-  ((CURSOR--))
 }
 
 opp-surround+d () {
@@ -395,7 +404,8 @@ opp-s-wrap-maybe () {
   shift 5
   [[ $RBUFFER == *${s2}* ]] && [[ $LBUFFER == *${s1}* ]] && {
     [[ $RBUFFER == *${s2}* ]] && {
-      local -i k=${(BS)RBUFFER#${s2}*}
+      local -i k; opp-s-wrap-scan 1 ${s2} ${s1} "$RBUFFER" +1 0 k
+      (($?==0)) || return -1
       CURSOR+=k; ((CURSOR--))
       [[ $sp == t ]] && {
         zle set-mark-command
@@ -408,7 +418,8 @@ opp-s-wrap-maybe () {
       RBUFFER=${t2}$RBUFFER
     }
     [[ $LBUFFER == *${s1}* ]] && {
-      local -i k=${(BS)LBUFFER%${s1}*}
+      local -i k; opp-s-wrap-scan $#LBUFFER ${s1} ${s2} "$LBUFFER" -1 0 k
+      (($?==0)) || return -1
       CURSOR=k; ((CURSOR--))
       zle set-mark-command
       CURSOR+=${#s1}
@@ -418,8 +429,25 @@ opp-s-wrap-maybe () {
     }
     return 0
   }
-  (($#@==0)) && return -1
+  (($#@<2)) && return -1
   opp-s-wrap-maybe "$sp" "$t1" "$t2" "$@"; return $?
+}
+
+opp-s-wrap-scan () {
+  local -i  pos="${1}"
+  local       a="${2}"
+  local       b="${3}"
+  local     buf="${4}"
+  local     suc="${5}"
+  local -i nest="${6}"
+  local   place="${7}"
+
+  ((pos==0))           && return -1
+  ((pos==(($#buf+1)))) && return -1
+
+  [[ $a != $b  ]] && {       opp-generic-pair-scan "$@"; return $?}||
+  [[ $suc = +1 ]] && { : ${(P)place::=${(BS)buf#${a}*}}; return 0 }||
+  [[ $suc = -1 ]] && { : ${(P)place::=${(BS)buf%${a}*}}; return 0 }
 }
 
 # opp-installer
