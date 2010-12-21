@@ -68,8 +68,8 @@ typeset -A opps; opps=()
 opp_keybuffer=
 
 opp-accept-p () {
-  [[ $KEYS != *[1-9] ]]    && return 1
   [[ -n ${opps[$KEYS]-} ]] && return 0
+  [[ $KEYS != *[1-9] ]]    && return 1
   return -1
 }
 
