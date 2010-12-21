@@ -53,6 +53,10 @@ TODO: as is op ip at it
 
 History
 
+v0.0.7
+Add ~, gu and gU.
+Paren-matching operation fixes.
+
 v0.0.6
 Add opp/surround.zsh
 
