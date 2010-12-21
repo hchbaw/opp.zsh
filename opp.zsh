@@ -227,11 +227,11 @@ opp-generic-pair-scan () {
     return $?
   }
 
-  [[ $buf[$pos] == $a ]] && {
+  [[ ${buf[$pos, $((pos+$#a-1))]-} == $a ]] && {
     ((nest==0)) && { : ${(P)place::=$pos}; return 0 } ||
     opp-generic-pair-scan-1 $((nest-1)); return $?
   } ||
-  [[ $buf[$pos] == $b ]] && {
+  [[ ${buf[$pos, $((pos+$#b-1))]-} == $b ]] && {
     opp-generic-pair-scan-1 $((nest+1)); return $?
   }
   opp-generic-pair-scan-1 $nest; return $?
