@@ -362,10 +362,13 @@ opp-recursive-edit-1 () {
   local succ="${3}"
   local   op="${4}"
   local mopp="${5}" # Mimic the OPerator or not.
+
+  local numeric=$NUMERIC
   zle recursive-edit -K opp && {
     ${opps[$KEYS]} opp-k $oppk
     zle $succ
   } || {
+    [[ -z "${numeric-}" ]] || { local NUMERIC=$numeric }
     local arg=$opp_keybuffer[(($#op+1)),-1]
     [[ -n $arg ]] && {
       opp-read-motion "$op" "$arg[-1]" "$arg" \
