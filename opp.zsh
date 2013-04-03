@@ -312,6 +312,17 @@ oppc-inbetween-main () {
   "$@"
 }
 
+opp-vi-prev-repeat-find () {
+  zle vi-rev-repeat-find
+  # http://zsh.git.sourceforge.net/git/gitweb.cgi?p=zsh/zsh;a=commitdiff;h=3e39278c24ff7b5cd686af9b219178e94d9228ad
+  autoload -Uz is-at-least
+  if is-at-least 5.0.1 || { [[ -n "${ZSH_PATCHLEVEL-}" ]] && \
+     is-at-least 1.5687 "${ZSH_PATCHLEVEL}" }; then
+    ((CURSOR+=2))
+  fi
+}
+zle -N opp-vi-prev-repeat-find
+
 def-oppc-inbetween-2 () {
   local s="$1"
   local ifun="$2"
@@ -322,14 +333,14 @@ def-oppc-inbetween-2 () {
       $proc ${(q)s} \
         opp-generic \
           -0 vi-find-prev-char-skip \
-          -1 vi-rev-repeat-find \
+          -1 opp-vi-prev-repeat-find \
           "\$@"
     }
     def-oppc a${(q)s}; ${(q)afun} () {
       $proc ${(q)s} \
         opp-generic \
           -1 vi-find-prev-char-skip \
-          -0 vi-rev-repeat-find \
+          -0 opp-vi-prev-repeat-find \
           "\$@"
     }
 EOT
