@@ -316,7 +316,7 @@ opp-vi-prev-repeat-find () {
   zle vi-rev-repeat-find
   local ret=$?
   ((ret==0)) || return ret
-  # http://zsh.git.sourceforge.net/git/gitweb.cgi?p=zsh/zsh;a=commitdiff;h=3e39278c24ff7b5cd686af9b219178e94d9228ad
+  # http://sourceforge.net/p/zsh/code/ci/3e39278c24ff7b5cd686af9b219178e94d9228ad
   autoload -Uz is-at-least
   if is-at-least 5.0.1 || { [[ -n "${ZSH_PATCHLEVEL-}" ]] && \
      is-at-least 1.5687 "${ZSH_PATCHLEVEL}" }; then
