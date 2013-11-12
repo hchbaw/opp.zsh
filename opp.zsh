@@ -303,56 +303,86 @@ def-oppc-pair '
 '
 
 def-oppc-inbetween-1 () {
-  def-oppc-inbetween-2 "$1" "opp+i$s" "opp+a$s" oppc-inbetween-main
+  def-oppc-inbetween-2 "$1" "opp+i$1" "opp+a$1" "$2"
 }
-
-oppc-inbetween-main () {
-  local s="$1"; shift
-  zle -U "$s"
-  "$@"
-}
-
-opp-vi-prev-repeat-find () {
-  zle vi-rev-repeat-find
-  local ret=$?
-  ((ret==0)) || return ret
-  # http://sourceforge.net/p/zsh/code/ci/3e39278c24ff7b5cd686af9b219178e94d9228ad
-  autoload -Uz is-at-least
-  if is-at-least 5.0.1 || { [[ -n "${ZSH_PATCHLEVEL-}" ]] && \
-     is-at-least 1.5687 "${ZSH_PATCHLEVEL}" }; then
-    ((CURSOR+=2))
-  fi
-  return ret
-}
-zle -N opp-vi-prev-repeat-find
 
 def-oppc-inbetween-2 () {
   local s="$1"
   local ifun="$2"
   local afun="$3"
-  local proc="$4"
+  local gsym="$4"
   eval "$(cat <<EOT
+    opp-gps-${(q)gsym}-s-ref () { : \${(P)1:=${(q)s}} }
+    opp-gps-${(q)gsym}-a () {
+      local k
+      local s=; opp-gps-${(q)gsym}-s-ref s
+      opp-inbetween-scan "\$s" k
+      ((\$?==0)) && CURSOR=\$k
+    }
+    zle -N opp-gps-${(q)gsym}-a
+    opp-gps-${(q)gsym}-b () {
+      local k
+      local s=; opp-gps-${(q)gsym}-s-ref s
+      opp-generic-pair-scan "\$((\$CURSOR+1))" \$s \$s \$BUFFER +1 0 k
+      ((\$?==0)) && ((CURSOR=\$k - 1))
+    }
+    zle -N opp-gps-${(q)gsym}-b
     def-oppc i${(q)s}; ${(q)ifun} () {
-      $proc ${(q)s} \
-        opp-generic \
-          -0 vi-find-prev-char-skip \
-          -1 opp-vi-prev-repeat-find \
-          "\$@"
+      opp-generic \
+        -0 opp-gps-${(q)gsym}-a \
+        -0 opp-gps-${(q)gsym}-b \
+        "\$@"
     }
     def-oppc a${(q)s}; ${(q)afun} () {
-      $proc ${(q)s} \
-        opp-generic \
-          -1 vi-find-prev-char-skip \
-          -0 opp-vi-prev-repeat-find \
-          "\$@"
+      opp-generic \
+        -1 opp-gps-${(q)gsym}-a \
+        +1 opp-gps-${(q)gsym}-b \
+        "\$@"
     }
 EOT
   )"
 }
 
+opp-inbetween-scan () {
+  local -i ret=0
+  local a="$1"; shift
+  local kplace="$1"; shift
+  local buf="$BUFFER";
+  if [[ "${buf[((CURSOR+1))]-}" == "$a" ]]; then
+    () {
+      local -i i=0 nest=0
+      local c=;
+      for ((i=1; i<CURSOR; i++)); do
+        ((i+1==CURSOR)) && break
+        [[ "${buf[$i,$((i+$#a-1))]-}" == "$a" ]] && {
+          ((nest++)); continue
+        }
+      done
+      ((nest & 1))
+    }
+    ((?==1)) && {
+      opp-generic-pair-scan $CURSOR "$a" "$a" "$buf" +1 0 "$kplace"; ((ret=?))
+      ((ret==0)) && {
+        : ${(P)kplace:=$CURSOR}
+        return ret
+      }
+    }
+  fi
+  opp-generic-pair-scan $CURSOR "$a" "$a" "$buf" -1 0 "$kplace"; ((ret=?))
+  ((ret==0)) || {
+    [[ "${buf[((CURSOR+1))]-}" == "$a" ]] && {
+      ((CURSOR++))
+      opp-generic-pair-scan $CURSOR "$a" "$a" "$buf" +1 0 "$kplace"
+      ((ret=?))
+    }
+  }
+  return ret
+}
+
 def-oppc-inbetween () {
+  local -i i=0
   local s; for s in "$@"; do
-    def-oppc-inbetween-1 "$s"
+    def-oppc-inbetween-1 "$s" "inbetween-$((i++))"
   done
 }
 
