@@ -259,7 +259,7 @@ def-oppc-pair-1 () {
   eval "$(cat <<EOT
     opp-gps-${(q)a} () {
       local k
-      opp-generic-pair-scan \$CURSOR ${(q)a} ${(q)b} \$BUFFER -1 0 k
+      opp-pair-scan \$CURSOR ${(q)a} ${(q)b} \$BUFFER -1 0 k
       ((\$?==0)) && CURSOR=\$k
     }
     zle -N opp-gps-${(q)a}
@@ -286,6 +286,16 @@ def-oppc-pair-1 () {
     }
 EOT
   )"
+}
+
+opp-pair-scan () {
+  shift
+  local -i ret=0
+  local a; a="$1"
+  [[ "${BUFFER[((CURSOR+1))]-}" ==  "$a" ]] && {
+    opp-generic-pair-scan $((CURSOR+1)) "$@"; return $?
+  }
+  opp-generic-pair-scan $CURSOR "$@"; return $?
 }
 
 def-oppc-pair () {
