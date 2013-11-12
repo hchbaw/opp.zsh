@@ -149,10 +149,23 @@ opp-generic () {
   local fun1="$1"; shift
   local fix2="$1"; shift
   local fun2="$1"; shift
-  local beg end
-  [[ $fun1 != none ]] && zle $fun1; ((beg=$CURSOR $fix1))
-  [[ $fun2 != none ]] && zle $fun2; ((end=$CURSOR $fix2))
+  local beg end cur
+  local -i ret=0
+  ((cur=CURSOR))
+  opp-generic-aux "$fun1" "$fix1" beg && \
+  opp-generic-aux "$fun2" "$fix2" end && \
   "$@" $beg $end
+  ((ret=?))
+  ((ret==0)) || { ((CURSOR=cur)) }
+  return ret
+}
+
+opp-generic-aux () {
+  local fun="$1" fix="$2" place="$3"
+  local -i ret=0
+  [[ $fun != none ]] && { zle $fun; ((ret=?)) }
+  ((ret==0)) && { (($place=$CURSOR $fix)) }
+  return ret
 }
 
 opp-generic-pair-scan () {
