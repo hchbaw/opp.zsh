@@ -14,7 +14,7 @@ with-opp-tb-read () {
   local OPP_TB_READ_CHAR=;
   local c; read -s -k 1 c
   [[ "$c" == [[:print:]] ]] || return
-  TB_READ_CHAR="$c"
+  OPP_TB_READ_CHAR="$c"
   "$@"
 }
 
