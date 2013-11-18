@@ -8,7 +8,7 @@
 # http://d.hatena.ne.jp/thinca/20100614/1276448745
 # http://d.hatena.ne.jp/tarao/20100715/1279185753
 
-def-oppc-inbetween-1 F tb
+def-oppc-inbetween-1 f tb
 
 with-opp-tb-read () {
   local OPP_TB_READ_CHAR=;
@@ -20,14 +20,14 @@ with-opp-tb-read () {
 
 # XXX: redefined!
 opp-gps-tb-s-ref () { : ${(P)1:=$OPP_TB_READ_CHAR} }
-opp+iF () {
+opp+if () {
   with-opp-tb-read \
     opp-generic \
       -0 opp-gps-tb-a \
       -0 opp-gps-tb-b \
       "$@"
 }
-opp+aF () {
+opp+af () {
   with-opp-tb-read \
     opp-generic \
       -1 opp-gps-tb-a \
