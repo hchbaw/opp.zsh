@@ -66,6 +66,10 @@ Thank you very much tpope!
 
 ### History
 
+#### v0.0.8
+* Fix textobj-between keybind. Thank you very much for the reoprt, wellle!
+* Much nicer README. Thank you very much for your contributions, roryokane!
+
 #### v0.0.7
 * Add `~`, `gu` and `gU`.
 * Paren-matching operation fixes.
@@ -79,7 +83,7 @@ Thank you very much tpope!
 * Add `aw` `aW` `iW` and fix `iw`.
 
 #### v0.0.4
-Add textobj-between link.
+* Add textobj-between link.
 
 #### v0.0.3
 * Cleanup inbetween code.
