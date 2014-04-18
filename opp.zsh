@@ -44,10 +44,10 @@ EOT
 }
 def-opp-skip opp-skip-blank-backward   -- -0 "[[:blank:]]"
 def-opp-skip opp-skip-blank-forward    ++ +1 "[[:blank:]]"
-def-opp-skip opp-skip-alnum-backward   -- -0 "[[:alnum:]]"
-def-opp-skip opp-skip-alnum-forward    ++ +1 "[[:alnum:]]"
-def-opp-skip opp-skip-punct-backward   -- -0 "[[:punct:]]"
-def-opp-skip opp-skip-punct-forward    ++ +1 "[[:punct:]]"
+def-opp-skip opp-skip-alnum-backward   -- -0 "[[:alnum:]_]"
+def-opp-skip opp-skip-alnum-forward    ++ +1 "[[:alnum:]_]"
+def-opp-skip opp-skip-punct-backward   -- -0 "[[:punct:]]~[_]"
+def-opp-skip opp-skip-punct-forward    ++ +1 "[[:punct:]]~[_]"
 def-opp-skip opp-skip-alpunum-backward -- -0 "[[:alnum:][:punct:]]"
 def-opp-skip opp-skip-alpunum-forward  ++ +1 "[[:alnum:][:punct:]]"
 
@@ -68,7 +68,7 @@ def-oppc iw; opp+iw () {
       -2 opp-skip-blank-forward \
       -- \
       "$@"
-  elif [[ $BUFFER[((CURSOR+1))] == [[:punct:]] ]]; then
+  elif [[ $BUFFER[((CURSOR+1))] == [[:punct:]]~[_] ]]; then
     opp-generic-w \
       -1 opp-skip-punct-backward \
       -2 opp-skip-punct-forward \
@@ -85,7 +85,7 @@ def-oppc iw; opp+iw () {
 
 opp-skip-aw-forward-on-blank () {
   zle opp-skip-blank-forward
-  if [[ $BUFFER[((CURSOR+1))] == [[:punct:]] ]]; then
+  if [[ $BUFFER[((CURSOR+1))] == [[:punct:]]~[_] ]]; then
     opp-skip-punct-forward
   else
     opp-skip-alnum-forward
@@ -98,7 +98,7 @@ def-oppc aw; opp+aw () {
       -1 opp-skip-blank-backward \
       -2 opp-skip-aw-forward-on-blank \
       "$@"
-  elif [[ $BUFFER[((CURSOR+1))] == [[:punct:]] ]]; then
+  elif [[ $BUFFER[((CURSOR+1))] == [[:punct:]]~[_] ]]; then
     opp-generic-w \
       -1 opp-skip-punct-backward \
       -1 opp-skip-blank-backward \
