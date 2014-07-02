@@ -665,7 +665,7 @@ opp-zcompile () {
 -- >8 --
 ## opp.zsh stuff.
 # source ${s/$HOME/~}
-autaload opp
+autoload opp
 { . ${gi/$HOME/~}; opp-install; }
 -- 8< --
 EOT
