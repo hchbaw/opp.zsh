@@ -21,6 +21,8 @@ To use this,
 
         % source opp/*.zsh
 
+**Note** This plugin overwrites some bindings within the vicmd-keymap (details below).
+
 *Optionally* you can use the zcompiled file with the autoloading for a little faster loading on every shell startup, if you zcompile the necessary functions.
 
 1. Prepare zcompiling the defined functions and the install command.
@@ -40,7 +42,11 @@ To use this,
         % { . ~/.zsh/zfunc/opp-install; opp-install }
         % autoload opp
 
-**Note:** This script replaces the following vicmd key map entries: `~`, `c`, `d`, `gu`, `gU` and `y`. Please be aware of that.
+**Note:** This script replaces the following vicmd key map entries: `~`, `c`, `d`, `gu`, `gU` and `y`. Please be aware of that, since this means that if you set bindings manually or even reset them after sourcing this plugin by using
+
+        % bindkey -d
+
+this plugin will not work.
 
 ### Extensions
 
