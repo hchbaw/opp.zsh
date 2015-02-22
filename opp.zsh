@@ -554,7 +554,7 @@ opp-install () {
     BK "c" opp-vi-change
     BK "d" opp-vi-delete
     BK "y" opp-vi-yank
-    BK "~" opp-vi-tilde
+    BK "g~" opp-vi-tilde
     BK "gU" opp-vi-uppercase
     BK "gu" opp-vi-lowercase
     { "$@" }

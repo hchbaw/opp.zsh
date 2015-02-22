@@ -42,7 +42,7 @@ To use this,
         % { . ~/.zsh/zfunc/opp-install; opp-install }
         % autoload opp
 
-**Note:** This script replaces the following vicmd key map entries: `~`, `c`, `d`, `gu`, `gU` and `y`. Please be aware of that, since this means that if you set bindings manually or even reset them after sourcing this plugin by using
+**Note:** This script replaces the following vicmd key map entries: `c`, `d`, `g~`, `gu`, `gU` and `y`. Please be aware of that, since this means that if you set bindings manually or even reset them after sourcing this plugin by using
 
         % bindkey -d
 
@@ -66,7 +66,7 @@ Thank you very much tpope!
 ### TODOs
 
 * TODO: in case these (`ci"` with improper double quotes) situations.
-* TODO: operator (currently `~`, `c`, `d`, `gu`, `gU` and `y`)
+* TODO: operator (currently `c`, `d`, `g~`, `gu`, `gU` and `y`)
 * TODO: `o_v` `o_V` `o_CTRL_V`
 * TODO: `as` `is` `op` `ip` `at` `it`
 
