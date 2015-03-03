@@ -10,7 +10,7 @@
 
 bindkey -N opp
 
-typeset -A opps; opps=()
+typeset -gA opps; opps=()
 opp_keybuffer=
 
 opp-accept-p () {
