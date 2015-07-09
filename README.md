@@ -1,7 +1,7 @@
 ### Important
 
 This code is **obsolete** for zsh-5.0.8 and greater.  zsh-5.0.8 comes with much
-more features out-of-box.
+more features out of the box.
 
 ----
 
