@@ -1,3 +1,10 @@
+### Important
+
+This code is **obsolete** for zsh-5.0.8 and greater.  zsh-5.0.8 comes with much
+more features out-of-box.
+
+----
+
 <img src="https://github.com/hchbaw/opp.zsh/raw/readme/ciw.png" />
 
 Vim’s text-objects-ish for Zsh.
