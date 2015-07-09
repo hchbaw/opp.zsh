@@ -335,6 +335,10 @@ with-opp () {
     emulate -L zsh
     setopt extended_glob
     zle -N undefined-key opp-undefined-key
+    zmodload zsh/zleparameter || {
+      echo 'Failed loading zsh/zleparameter module, aborting.'
+      return -1
+    }
     opp_keybuffer=$KEYS
     "$@[1,-2]" "$opp_keybuffer" "$5"
   } always {
@@ -465,6 +469,9 @@ opp-k () {
   CURSOR="$2"
   zle set-mark-command
   CURSOR="$3"
+  if [[ -n "${keymaps[(r)viopp]-}" ]]; then
+    [[ "$1" == (kill-region|*-copy-region) ]] && { ((CURSOR--)) }
+  fi
   zle "$1"
 }
 

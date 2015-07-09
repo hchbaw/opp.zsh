@@ -424,6 +424,9 @@ opp-s-wrap-maybe () {
       zle set-mark-command
       CURSOR+=${#s1}
       [[ $sp == t ]] && opp-skip-blank-forward
+      if [[ -n "${keymaps[(r)viopp]-}" ]]; then
+        ((CURSOR--))
+      fi
       zle kill-region
       LBUFFER=$LBUFFER${t1}
     }
