@@ -414,6 +414,9 @@ opp-s-wrap-maybe () {
       }
       zle set-mark-command
       CURSOR+=${#s2}
+      if [[ -n "${keymaps[(r)viopp]-}" ]]; then
+        ((CURSOR--))
+      fi
       zle kill-region
       RBUFFER=${t2}$RBUFFER
     }
